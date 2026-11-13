@@ -494,3 +494,6 @@ secrets/*
 *.db-wal
 src/Sin.Api/wwwroot/uploads/*
 !src/Sin.Api/wwwroot/uploads/.gitkeep
+
+# Demo screenshots
+demo/

@@ -40,7 +40,9 @@ public static class FeedEndpoints
                 .Where(u => !db.Swipes.Any(s => s.SwiperId == me.Id && s.TargetId == u.Id))
                 .OrderBy(_ => EF.Functions.Random())
                 .Take(Math.Clamp(take ?? 20, 1, 50))
-                .AsSplitQuery()
+                // Single query on purpose: a split query re-runs ORDER BY random() for the
+                // Flaws part and attaches confessions for a *different* random set of users.
+                .AsSingleQuery()
                 .ToListAsync();
 
             return Results.Ok(profiles.Select(p => p.ToDto(req)));

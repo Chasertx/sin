@@ -5,7 +5,7 @@
              xmlns:shared="clr-namespace:Sin.Shared;assembly=Sin.Shared"
              x:Class="Sin.Mobile.Views.MyProfilePage"
              x:DataType="vm:MyProfileViewModel"
-             Title="My Sins">
+             Title="My Problems">
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Log out" Command="{Binding LogoutCommand}" />
@@ -22,7 +22,7 @@
                     <Editor Placeholder="e.g. I eat cereal for dinner and I'm not sorry." Text="{Binding NewFlawText}"
                             AutoSize="TextChanges" MaxLength="280" MinimumHeightRequest="80" />
                     <Button Text="Confess" Command="{Binding AddFlawCommand}" IsEnabled="{Binding IsNotBusy}" />
-                    <Label Text="No humblebrags. 'I'm a perfectionist' will be rejected." Style="{StaticResource Muted}" FontSize="12" />
+                    <Label Text="No humblebrags. 'I'm a perfectionist' will be rejected." Style="{StaticResource MutedLabel}" FontSize="12" />
                 </VerticalStackLayout>
             </Border>
 
@@ -51,7 +51,7 @@
             <Label Text="Least flattering photo" Style="{StaticResource Section}" Margin="0,16,0,0" />
             <Border Style="{StaticResource Card}" Padding="0" HeightRequest="200">
                 <Grid>
-                    <Label Text="📷  Tap to add your worst photo" Style="{StaticResource Muted}"
+                    <Label Text="📷  Tap to add your worst photo" Style="{StaticResource MutedLabel}"
                            HorizontalOptions="Center" VerticalOptions="Center"
                            IsVisible="{Binding PhotoUrl, Converter={StaticResource NoValue}}" />
                     <Image Source="{Binding PhotoUrl}" Aspect="AspectFill"

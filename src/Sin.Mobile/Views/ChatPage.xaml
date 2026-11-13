@@ -14,7 +14,7 @@
         <CollectionView x:Name="MessagesList" ItemsSource="{Binding Messages}" ItemsUpdatingScrollMode="KeepLastItemInView">
             <CollectionView.EmptyView>
                 <Label Text="Ask about their worst flaw. It's literally the point."
-                       Style="{StaticResource Muted}" HorizontalTextAlignment="Center" Padding="32,80" />
+                       Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" Padding="32,80" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:MessageItem">
@@ -22,7 +22,7 @@
                         <Border BackgroundColor="{Binding Bubble}" StrokeThickness="0" StrokeShape="RoundRectangle 18" Padding="14,9">
                             <Label Text="{Binding Text}" TextColor="White" />
                         </Border>
-                        <Label Text="{Binding Time}" Style="{StaticResource Muted}" FontSize="10"
+                        <Label Text="{Binding Time}" Style="{StaticResource MutedLabel}" FontSize="10"
                                HorizontalOptions="{Binding Align}" Margin="6,2" />
                     </VerticalStackLayout>
                 </DataTemplate>

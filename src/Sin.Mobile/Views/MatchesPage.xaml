@@ -14,7 +14,7 @@
                     <Label Text="💔" FontSize="52" HorizontalOptions="Center" />
                     <Label Text="No matches yet." FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
                     <Label Text="Someone out there can live with your flaws. Keep swiping."
-                           Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                           Style="{StaticResource MutedLabel}" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
@@ -32,7 +32,7 @@
                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
                             <Label Text="{Binding OtherName}" FontSize="17" FontAttributes="Bold" />
                             <Label Text="{Binding LastMessage, TargetNullValue='New match. Break the ice (or something else).'}"
-                                   Style="{StaticResource Muted}" LineBreakMode="TailTruncation" MaxLines="1" />
+                                   Style="{StaticResource MutedLabel}" LineBreakMode="TailTruncation" MaxLines="1" />
                         </VerticalStackLayout>
                     </Grid>
                 </DataTemplate>

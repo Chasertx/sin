@@ -47,8 +47,11 @@ public class SupabasePhotoStore : IPhotoStore
         _bucket = config["Supabase:Bucket"] is { Length: > 0 } b ? b : "photos";
         var key = config["Supabase:ServiceKey"]!;
         _http = http;
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
         _http.DefaultRequestHeaders.Add("apikey", key);
+        // Legacy service_role keys are JWTs and also go in Authorization. New sb_secret_ keys
+        // aren't JWTs; Supabase's gateway accepts them via the apikey header alone.
+        if (key.StartsWith("eyJ"))
+            _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task SaveAsync(string name, Stream content, string contentType)

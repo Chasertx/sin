@@ -8,6 +8,12 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development   # enables demo users that like you back
       Jwt__Key: ${JWT_KEY:-CHANGE-ME-this-is-a-dev-only-signing-key-at-least-32-chars}
+      # Database: local SQLite by default. Set DATABASE_PROVIDER=Postgres + DATABASE_URL in .env to use Supabase.
+      Database__Provider: ${DATABASE_PROVIDER:-Sqlite}
+      ConnectionStrings__Sin: ${DATABASE_URL:-Data Source=/data/sin.db}
+      # Photos: local volume by default; Supabase Storage when these are set.
+      Supabase__Url: ${SUPABASE_URL:-}
+      Supabase__ServiceKey: ${SUPABASE_SERVICE_KEY:-}
       # SSO: put real values in a .env file next to this one (see .env.example). Blank = provider off.
       Sso__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Sso__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}

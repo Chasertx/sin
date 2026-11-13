@@ -13,7 +13,7 @@
         <VerticalStackLayout Grid.Row="0" IsVisible="{Binding IsEmpty}" VerticalOptions="Center" Spacing="12" Padding="24">
             <Label Text="🕳️" FontSize="56" HorizontalOptions="Center" />
             <Label Text="You've judged everyone." FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
-            <Label Text="Come back later for fresh disasters." Style="{StaticResource Muted}" HorizontalOptions="Center" />
+            <Label Text="Come back later for fresh disasters." Style="{StaticResource MutedLabel}" HorizontalOptions="Center" />
             <Button Text="Check again" Command="{Binding RefreshCommand}" HorizontalOptions="Center" Margin="0,12,0,0" />
         </VerticalStackLayout>
 
@@ -31,7 +31,7 @@
             <Grid RowDefinitions="220,*">
                 <!-- Photo (or lack thereof) -->
                 <Grid Grid.Row="0" BackgroundColor="{StaticResource SurfaceRaised}">
-                    <Label Text="🙈  No photo. Probably for the best." Style="{StaticResource Muted}"
+                    <Label Text="🙈  No photo. Probably for the best." Style="{StaticResource MutedLabel}"
                            HorizontalOptions="Center" VerticalOptions="Center"
                            IsVisible="{Binding Current.PhotoUrl, Converter={StaticResource NoValue}}" />
                     <Image Source="{Binding Current.PhotoUrl}" Aspect="AspectFill"

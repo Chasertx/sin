@@ -31,7 +31,7 @@ public partial class RegisterViewModel(Session session, ApiClient api) : BaseVie
             var auth = await api.RegisterAsync(new RegisterRequest(Email.Trim(), Password, DisplayName.Trim(), age, Gender, InterestedIn));
             await Session.SaveAsync(auth);
             await Shell.Current.GoToAsync("//main/me");
-            await Alert("Welcome to Sin",
+            await Alert("We all got problems",
                 "Nobody will see you until you confess at least one flaw. Go on. Get it off your chest.");
         });
     }

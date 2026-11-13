@@ -2,6 +2,17 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource Bg}" />
+        <Setter Property="Shell.ForegroundColor" Value="{StaticResource Ink}" />
+        <Setter Property="Shell.TitleColor" Value="{StaticResource Ink}" />
+        <Setter Property="Shell.NavBarHasShadow" Value="False" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource Surface}" />
+        <Setter Property="Shell.TabBarForegroundColor" Value="{StaticResource Flag}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{StaticResource Flag}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource Muted}" />
+    </Style>
+
     <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{StaticResource Bg}" />
     </Style>
@@ -24,7 +35,7 @@
         <Setter Property="CharacterSpacing" Value="1.5" />
     </Style>
 
-    <Style x:Key="Muted" TargetType="Label">
+    <Style x:Key="MutedLabel" TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource Muted}" />
         <Setter Property="FontSize" Value="13" />
     </Style>

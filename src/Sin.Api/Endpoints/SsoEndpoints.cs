@@ -33,10 +33,10 @@ public static class SsoEndpoints
                 .Where(n => KnownProviders.Contains(n))
                 .ToArray());
 
-        g.MapGet("/sso/{provider}", async (string provider, HttpContext ctx, SinDb db, TokenService tokens,
-            IAuthenticationSchemeProvider schemes, IConfiguration config, ILoggerFactory logs) =>
+        g.MapGet("/sso/{provider}", async (string provider, string? returnUrl, HttpContext ctx, SinDb db, TokenService tokens,
+            IAuthenticationSchemeProvider schemes, IConfiguration config, IWebHostEnvironment env, ILoggerFactory logs) =>
         {
-            var callback = $"{config["Sso:CallbackScheme"] ?? "sin"}://auth";
+            var callback = ResolveCallback(returnUrl, config, env);
 
             var scheme = (await schemes.GetAllSchemesAsync())
                 .FirstOrDefault(s => KnownProviders.Contains(s.Name) && s.Name.Equals(provider, StringComparison.OrdinalIgnoreCase));
@@ -46,7 +46,7 @@ public static class SsoEndpoints
             // Step 2 not done yet (or the cookie is from a different provider): go to the provider.
             var external = await ctx.AuthenticateAsync(ExternalCookie);
             if (!external.Succeeded || external.Principal?.Identity?.AuthenticationType != scheme.Name)
-                return Results.Challenge(new AuthenticationProperties { RedirectUri = ctx.Request.Path }, [scheme.Name]);
+                return Results.Challenge(new AuthenticationProperties { RedirectUri = ctx.Request.Path + ctx.Request.QueryString }, [scheme.Name]);
 
             await ctx.SignOutAsync(ExternalCookie);
 
@@ -96,5 +96,19 @@ public static class SsoEndpoints
                 $"onboarding={(user.NeedsOnboarding ? "1" : "0")}");
             return Results.Redirect($"{callback}#{fragment}");
         }).ExcludeFromDescription();
+    }
+
+    /// <summary>
+    /// Where to send the user back to. Only the app's own scheme is allowed (never arbitrary URLs,
+    /// which would leak the token), plus Expo Go's exp:// URLs while developing.
+    /// </summary>
+    private static string ResolveCallback(string? returnUrl, IConfiguration config, IWebHostEnvironment env)
+    {
+        var appScheme = config["Sso:CallbackScheme"] ?? "sin";
+        var fallback = $"{appScheme}://auth";
+        if (string.IsNullOrWhiteSpace(returnUrl) || !Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri))
+            return fallback;
+        var allowed = uri.Scheme == appScheme || (env.IsDevelopment() && uri.Scheme is "exp" or "exps");
+        return allowed ? returnUrl.Split('#')[0] : fallback;
     }
 }
