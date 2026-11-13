@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sin.Mobile.ViewModels"
+             xmlns:shared="clr-namespace:Sin.Shared;assembly=Sin.Shared"
+             x:Class="Sin.Mobile.Views.FeedPage"
+             x:DataType="vm:FeedViewModel"
+             Title="Confessions">
+
+    <Grid RowDefinitions="*,Auto" Padding="16,8,16,16" RowSpacing="16">
+
+        <!-- Empty state -->
+        <VerticalStackLayout Grid.Row="0" IsVisible="{Binding IsEmpty}" VerticalOptions="Center" Spacing="12" Padding="24">
+            <Label Text="🕳️" FontSize="56" HorizontalOptions="Center" />
+            <Label Text="You've judged everyone." FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Label Text="Come back later for fresh disasters." Style="{StaticResource Muted}" HorizontalOptions="Center" />
+            <Button Text="Check again" Command="{Binding RefreshCommand}" HorizontalOptions="Center" Margin="0,12,0,0" />
+        </VerticalStackLayout>
+
+        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Center" HorizontalOptions="Center" />
+
+        <!-- The card -->
+        <Border x:Name="Card" Grid.Row="0" IsVisible="{Binding HasCurrent}"
+                BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Stroke}" StrokeThickness="1"
+                StrokeShape="RoundRectangle 24" Padding="0">
+            <Border.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+            </Border.GestureRecognizers>
+
+            <Grid RowDefinitions="220,*">
+                <!-- Photo (or lack thereof) -->
+                <Grid Grid.Row="0" BackgroundColor="{StaticResource SurfaceRaised}">
+                    <Label Text="🙈  No photo. Probably for the best." Style="{StaticResource Muted}"
+                           HorizontalOptions="Center" VerticalOptions="Center"
+                           IsVisible="{Binding Current.PhotoUrl, Converter={StaticResource NoValue}}" />
+                    <Image Source="{Binding Current.PhotoUrl}" Aspect="AspectFill"
+                           IsVisible="{Binding Current.PhotoUrl, Converter={StaticResource HasValue}}" />
+                    <BoxView VerticalOptions="End" HeightRequest="90">
+                        <BoxView.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="Transparent" Offset="0" />
+                                <GradientStop Color="#E61F1215" Offset="1" />
+                            </LinearGradientBrush>
+                        </BoxView.Background>
+                    </BoxView>
+                    <HorizontalStackLayout VerticalOptions="End" Padding="18,0,18,10" Spacing="8">
+                        <Label Text="{Binding Current.DisplayName}" FontSize="28" FontAttributes="Bold" />
+                        <Label Text="{Binding Current.Age}" FontSize="24" TextColor="{StaticResource Muted}" VerticalOptions="End" />
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Confessions -->
+                <VerticalStackLayout Grid.Row="1" Padding="18,14,18,18" Spacing="10">
+                    <Label Text="{Binding Current.Headline, StringFormat='“{0}”'}" FontSize="17" FontAttributes="Italic"
+                           TextColor="{StaticResource Caution}"
+                           IsVisible="{Binding Current.Headline, Converter={StaticResource HasValue}}" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Current.Flaws}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="shared:FlawDto">
+                                <Border Style="{StaticResource Card}" Padding="12,10" BackgroundColor="{StaticResource SurfaceRaised}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="{Binding Category, Converter={StaticResource CategoryLabel}}"
+                                               FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Flag}" />
+                                        <Label Text="{Binding Text}" FontSize="15" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Swipe stamps -->
+                <Border x:Name="YesStamp" Grid.RowSpan="2" Opacity="0" Rotation="-14" Margin="18,28"
+                        HorizontalOptions="Start" VerticalOptions="Start" Stroke="{StaticResource Caution}" StrokeThickness="3"
+                        StrokeShape="RoundRectangle 8" Padding="10,4" InputTransparent="True">
+                    <Label Text="I CAN LIVE&#10;WITH THAT" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Caution}" />
+                </Border>
+                <Border x:Name="NopeStamp" Grid.RowSpan="2" Opacity="0" Rotation="14" Margin="18,28"
+                        HorizontalOptions="End" VerticalOptions="Start" Stroke="{StaticResource Flag}" StrokeThickness="3"
+                        StrokeShape="RoundRectangle 8" Padding="10,4" InputTransparent="True">
+                    <Label Text="DEAL&#10;BREAKER" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource Flag}" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="14" IsVisible="{Binding HasCurrent}">
+            <Button Grid.Column="0" Text="✕  Dealbreaker" Clicked="OnNopeClicked"
+                    BackgroundColor="Transparent" BorderColor="{StaticResource Flag}" BorderWidth="2"
+                    TextColor="{StaticResource Flag}" />
+            <Button Grid.Column="1" Text="✓  I can live with that" Clicked="OnYesClicked"
+                    BackgroundColor="{StaticResource Caution}" TextColor="#140A0C" />
+        </Grid>
+    </Grid>
+</ContentPage>

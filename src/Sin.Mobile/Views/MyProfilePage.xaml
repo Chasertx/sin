@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sin.Mobile.ViewModels"
+             xmlns:shared="clr-namespace:Sin.Shared;assembly=Sin.Shared"
+             x:Class="Sin.Mobile.Views.MyProfilePage"
+             x:DataType="vm:MyProfileViewModel"
+             Title="My Sins">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Log out" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+
+            <!-- Confess -->
+            <Label Text="Confess something" Style="{StaticResource Section}" />
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="10">
+                    <Picker Title="Category" ItemsSource="{Binding Categories}" SelectedItem="{Binding NewFlawCategory}" />
+                    <Editor Placeholder="e.g. I eat cereal for dinner and I'm not sorry." Text="{Binding NewFlawText}"
+                            AutoSize="TextChanges" MaxLength="280" MinimumHeightRequest="80" />
+                    <Button Text="Confess" Command="{Binding AddFlawCommand}" IsEnabled="{Binding IsNotBusy}" />
+                    <Label Text="No humblebrags. 'I'm a perfectionist' will be rejected." Style="{StaticResource Muted}" FontSize="12" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- My flaws -->
+            <Label Text="{Binding FlawCount}" Style="{StaticResource Section}" Margin="0,12,0,0" />
+            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Flaws}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="shared:FlawDto">
+                        <Border Style="{StaticResource Card}" Padding="14,10">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Category, Converter={StaticResource CategoryLabel}}"
+                                           FontSize="11" FontAttributes="Bold" TextColor="{StaticResource Flag}" />
+                                    <Label Text="{Binding Text}" />
+                                </VerticalStackLayout>
+                                <Button Grid.Column="1" Text="✕" Clicked="OnDeleteFlawClicked" VerticalOptions="Center"
+                                        BackgroundColor="Transparent" TextColor="{StaticResource Muted}"
+                                        Padding="8" MinimumWidthRequest="40" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <!-- Photo -->
+            <Label Text="Least flattering photo" Style="{StaticResource Section}" Margin="0,16,0,0" />
+            <Border Style="{StaticResource Card}" Padding="0" HeightRequest="200">
+                <Grid>
+                    <Label Text="📷  Tap to add your worst photo" Style="{StaticResource Muted}"
+                           HorizontalOptions="Center" VerticalOptions="Center"
+                           IsVisible="{Binding PhotoUrl, Converter={StaticResource NoValue}}" />
+                    <Image Source="{Binding PhotoUrl}" Aspect="AspectFill"
+                           IsVisible="{Binding PhotoUrl, Converter={StaticResource HasValue}}" />
+                </Grid>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding PickPhotoCommand}" />
+                </Border.GestureRecognizers>
+            </Border>
+
+            <!-- Profile -->
+            <Label Text="The basics" Style="{StaticResource Section}" Margin="0,16,0,0" />
+            <Entry Placeholder="First name" Text="{Binding DisplayName}" />
+            <Entry Placeholder="Age" Text="{Binding AgeText}" Keyboard="Numeric" />
+            <Entry Placeholder="Headline: the worst thing about you, in one line" Text="{Binding Headline}" MaxLength="140" />
+            <Picker Title="I am a..." ItemsSource="{Binding Genders}" SelectedItem="{Binding Gender}" />
+            <Picker Title="Interested in..." ItemsSource="{Binding Interests}" SelectedItem="{Binding InterestedIn}" />
+            <Button Text="Save profile" Command="{Binding SaveProfileCommand}" IsEnabled="{Binding IsNotBusy}" Style="{StaticResource Ghost}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

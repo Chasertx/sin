@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sin.Mobile.ViewModels"
+             xmlns:shared="clr-namespace:Sin.Shared;assembly=Sin.Shared"
+             x:Class="Sin.Mobile.Views.MatchesPage"
+             x:DataType="vm:MatchesViewModel"
+             Title="Matches">
+
+    <RefreshView IsRefreshing="{Binding IsRefreshing}" Command="{Binding LoadCommand}">
+        <CollectionView ItemsSource="{Binding Matches}" SelectionMode="Single" SelectionChanged="OnSelected">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="32,80" Spacing="10">
+                    <Label Text="💔" FontSize="52" HorizontalOptions="Center" />
+                    <Label Text="No matches yet." FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" />
+                    <Label Text="Someone out there can live with your flaws. Keep swiping."
+                           Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="shared:MatchDto">
+                    <Grid Padding="16,10" ColumnDefinitions="56,*" ColumnSpacing="14">
+                        <Border WidthRequest="56" HeightRequest="56" StrokeShape="RoundRectangle 28" StrokeThickness="0"
+                                BackgroundColor="{StaticResource SurfaceRaised}">
+                            <Grid>
+                                <Label Text="🚩" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center"
+                                       IsVisible="{Binding OtherPhotoUrl, Converter={StaticResource NoValue}}" />
+                                <Image Source="{Binding OtherPhotoUrl}" Aspect="AspectFill"
+                                       IsVisible="{Binding OtherPhotoUrl, Converter={StaticResource HasValue}}" />
+                            </Grid>
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label Text="{Binding OtherName}" FontSize="17" FontAttributes="Bold" />
+                            <Label Text="{Binding LastMessage, TargetNullValue='New match. Break the ice (or something else).'}"
+                                   Style="{StaticResource Muted}" LineBreakMode="TailTruncation" MaxLines="1" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

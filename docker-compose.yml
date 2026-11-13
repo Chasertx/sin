@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/Sin.Api/Dockerfile
+    ports:
+      - "5080:5080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development   # enables demo users that like you back
+      Jwt__Key: ${JWT_KEY:-CHANGE-ME-this-is-a-dev-only-signing-key-at-least-32-chars}
+      # SSO: put real values in a .env file next to this one (see .env.example). Blank = provider off.
+      Sso__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Sso__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Sso__Apple__ClientId: ${APPLE_SERVICES_ID:-}
+      Sso__Apple__TeamId: ${APPLE_TEAM_ID:-}
+      Sso__Apple__KeyId: ${APPLE_KEY_ID:-}
+      Sso__Apple__PrivateKeyPath: /secrets/apple_authkey.p8
+    volumes:
+      - sin-data:/data                       # SQLite database
+      - sin-uploads:/app/wwwroot/uploads     # uploaded photos
+      - ./secrets:/secrets:ro                # drop AuthKey_XXXX.p8 here as apple_authkey.p8
+
+volumes:
+  sin-data:
+  sin-uploads:

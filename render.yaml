@@ -1,0 +1,37 @@
+# Render Blueprint: in the Render dashboard choose New > Blueprint and pick this repo.
+# Values marked sync: false are secrets; Render asks you for them during setup.
+services:
+  - type: web
+    name: sin-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./src/Sin.Api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Jwt__Key
+        generateValue: true
+      - key: Database__Provider
+        value: Postgres
+      # Supabase > Project Settings > Database > Connection string > "Session pooler" (URI).
+      # Use the session pooler: Render's free tier can't reach Supabase's IPv6-only direct host.
+      - key: ConnectionStrings__Sin
+        sync: false
+      # Supabase > Project Settings > API: Project URL, and the service_role secret key.
+      - key: Supabase__Url
+        sync: false
+      - key: Supabase__ServiceKey
+        sync: false
+      - key: Supabase__Bucket
+        value: photos
+      # Seed demo users so the feed isn't empty while testing. Set to false for launch.
+      - key: Demo__SeedUsers
+        value: "true"
+      # Optional SSO (leave blank to hide the buttons)
+      - key: Sso__Google__ClientId
+        sync: false
+      - key: Sso__Google__ClientSecret
+        sync: false

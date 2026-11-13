@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/*.db
+**/*.db-*
+**/wwwroot/uploads/*
+src/Sin.Mobile/
+.git
+.vs
+secrets/
+.env
