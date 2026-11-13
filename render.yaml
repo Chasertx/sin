@@ -1,14 +1,17 @@
-# Render Blueprint: in the Render dashboard choose New > Blueprint and pick this repo.
+# Render Blueprint (PRODUCTION): in the Render dashboard choose New > Blueprint and pick this repo.
 # Values marked sync: false are secrets; Render asks you for them during setup.
+# Use the PROD Supabase project here. Your PC's .env points at the DEV project.
 services:
   - type: web
-    name: sin-api
+    name: get-what-ya-get-api
     runtime: docker
     plan: free
     dockerfilePath: ./src/Sin.Api/Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    autoDeploy: true
+    # Deploy only after GitHub Actions CI (all API + app tests) passes on the commit.
+    autoDeployTrigger: checksPass
+    branch: main
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production

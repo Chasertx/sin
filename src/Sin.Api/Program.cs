@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Sin.Api.Data;
@@ -31,7 +32,7 @@ else
     builder.Services.AddDbContext<SinDb>(o => o.UseSqlite(connectionString));
 
 // ---- Photos: Supabase Storage if configured, else local disk ----
-if (config["Supabase:Url"] is { Length: > 0 })
+if (config["Supabase:Url"] is { Length: > 0 } && config["Supabase:ServiceKey"] is { Length: > 0 })
     builder.Services.AddHttpClient<IPhotoStore, SupabasePhotoStore>();
 else
     builder.Services.AddSingleton<IPhotoStore, LocalPhotoStore>();
@@ -158,7 +159,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SinDb>();
-    db.Database.EnsureCreated();
+    if (db.Database.IsNpgsql())
+    {
+        // Supabase databases already contain Supabase's own tables (auth, storage...), so
+        // EnsureCreated() would think "already set up" and skip. Create ours if our schema is empty.
+        var ourTables = db.Database
+            .SqlQueryRaw<int>("select count(*)::int as \"Value\" from information_schema.tables where table_schema = {0}", SinDb.PostgresSchema)
+            .AsEnumerable()
+            .First();
+        if (ourTables == 0)
+        {
+            db.Database.ExecuteSqlRaw($"CREATE SCHEMA IF NOT EXISTS \"{SinDb.PostgresSchema}\"");
+            db.GetService<Microsoft.EntityFrameworkCore.Storage.IRelationalDatabaseCreator>().CreateTables();
+        }
+    }
+    else
+    {
+        db.Database.EnsureCreated();
+    }
     if (config.GetValue<bool>("Demo:SeedUsers")) SeedData.Seed(db);
 }
 

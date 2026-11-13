@@ -21,8 +21,17 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
     private class UtcDateTimeConverter() : Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
         v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
+    /// <summary>
+    /// On Postgres all tables live in the "app" schema, not "public". Supabase's Data API
+    /// (PostgREST) only exposes "public", so this keeps password hashes, messages, etc.
+    /// unreachable with the project's public key. See SECURITY-AUDIT.md finding #1.
+    /// </summary>
+    public const string PostgresSchema = "app";
+
     protected override void OnModelCreating(ModelBuilder b)
     {
+        if (Database.IsNpgsql()) b.HasDefaultSchema(PostgresSchema);
+
         b.Entity<User>(e =>
         {
             e.HasIndex(u => u.Email).IsUnique();
