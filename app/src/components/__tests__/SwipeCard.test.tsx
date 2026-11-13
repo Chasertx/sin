@@ -37,15 +37,15 @@ it('omits the headline bubble when there is none', async () => {
   expect(screen.queryByText(/“/)).toBeNull();
 });
 
-it('shows at most three confessions and counts the rest', async () => {
+it('shows at most two confessions (so nothing gets cut off) and counts the rest', async () => {
   await render(<SwipeCard profile={profile({ flaws: flaws(5) })} onSwiped={jest.fn()} />);
-  expect(screen.getByText('quirk 2')).toBeTruthy();
-  expect(screen.queryByText('quirk 3')).toBeNull();
-  expect(screen.getByText('+ 2 more confessions')).toBeTruthy();
+  expect(screen.getByText('quirk 1')).toBeTruthy();
+  expect(screen.queryByText('quirk 2')).toBeNull();
+  expect(screen.getByText('+ 3 more confessions')).toBeTruthy();
 });
 
 it('uses singular wording for one extra confession', async () => {
-  await render(<SwipeCard profile={profile({ flaws: flaws(4) })} onSwiped={jest.fn()} />);
+  await render(<SwipeCard profile={profile({ flaws: flaws(3) })} onSwiped={jest.fn()} />);
   expect(screen.getByText('+ 1 more confession')).toBeTruthy();
 });
 

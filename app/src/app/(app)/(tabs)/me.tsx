@@ -128,8 +128,8 @@ export default function MyProblems() {
               <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
             ) : (
               <View style={styles.photoEmpty}>
-                <Ionicons name="camera" size={28} color={colors.pink} />
-                <Text style={styles.photoHint}>Add your{'\n'}worst photo</Text>
+                <Ionicons name="camera" size={30} color={colors.pink} />
+                <Text style={styles.photoHint}>Worst photo</Text>
               </View>
             )}
             <View style={styles.photoBadge}>
@@ -141,15 +141,15 @@ export default function MyProblems() {
 
         <View style={styles.content}>
           {needsOnboarding || (profile && profile.age < 18) ? (
-            <Card style={[styles.banner, { backgroundColor: tint(colors.sunshine, 0.2) }]}>
+            <View style={[styles.banner, { backgroundColor: '#FFF1CC' }]}>
               <Txt variant="heading">👋 Almost there</Txt>
               <Txt style={{ color: colors.inkSoft }}>Add your age and who you're into below, then confess something.</Txt>
-            </Card>
+            </View>
           ) : flaws.length === 0 ? (
-            <Card style={[styles.banner, { backgroundColor: tint(colors.violet, 0.1) }]}>
+            <View style={[styles.banner, { backgroundColor: '#EEE9FF' }]}>
               <Txt variant="heading">🙈 You're invisible right now</Txt>
               <Txt style={{ color: colors.inkSoft }}>Confess at least one problem and you'll show up in Discover.</Txt>
-            </Card>
+            </View>
           ) : null}
 
           {/* Composer */}
@@ -228,12 +228,12 @@ const styles = StyleSheet.create({
   logout: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: tint(colors.white, 0.2), paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill },
   logoutText: { fontFamily: fonts.heavy, color: colors.white, fontSize: 13 },
   photo: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.white, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
-  photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 10 },
   photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.pink, textAlign: 'center' },
-  photoBadge: { position: 'absolute', right: 6, bottom: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.violet, alignItems: 'center', justifyContent: 'center' },
+  photoBadge: { position: 'absolute', right: 4, bottom: 4, width: 26, height: 26, borderRadius: 14, backgroundColor: colors.violet, alignItems: 'center', justifyContent: 'center' },
   heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
   content: { padding: 16, gap: 12, marginTop: -8 },
-  banner: { gap: 4 },
+  banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
   flaw: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16 },
   del: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
 });

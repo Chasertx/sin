@@ -22,7 +22,7 @@ export interface SwipeCardHandle {
   swipe: (canHandleIt: boolean) => void;
 }
 
-const MAX_FLAWS_SHOWN = 3;
+const MAX_FLAWS_SHOWN = 2;
 
 export function SwipeCard({
   profile,
