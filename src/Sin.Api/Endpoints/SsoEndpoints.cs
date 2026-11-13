@@ -102,7 +102,7 @@ public static class SsoEndpoints
     /// Where to send the user back to. Only the app's own scheme is allowed (never arbitrary URLs,
     /// which would leak the token), plus Expo Go's exp:// URLs while developing.
     /// </summary>
-    private static string ResolveCallback(string? returnUrl, IConfiguration config, IWebHostEnvironment env)
+    internal static string ResolveCallback(string? returnUrl, IConfiguration config, IWebHostEnvironment env)
     {
         var appScheme = config["Sso:CallbackScheme"] ?? "sin";
         var fallback = $"{appScheme}://auth";

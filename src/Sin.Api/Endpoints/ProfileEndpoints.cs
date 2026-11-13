@@ -22,7 +22,7 @@ public static class ProfileEndpoints
             return user is null ? Results.NotFound() : Results.Ok(user.ToDto(req));
         });
 
-        g.MapPut("/", async (UpdateProfileRequest r, ClaimsPrincipal me, SinDb db, HttpRequest req) =>
+        g.MapPut("/", async (UpdateProfileRequest r, ClaimsPrincipal me, SinDb db, HttpRequest req, ContentFilter filter) =>
         {
             var user = await db.Users.Include(u => u.Flaws).FirstOrDefaultAsync(u => u.Id == me.UserId());
             if (user is null) return Results.NotFound();
@@ -30,6 +30,8 @@ public static class ProfileEndpoints
             if (r.Age < 18 || r.Age > 120) return Error("You must be 18 or older.");
             var headline = string.IsNullOrWhiteSpace(r.Headline) ? null : r.Headline.Trim();
             if (headline?.Length > Limits.HeadlineMaxLength) return Error($"Headline max {Limits.HeadlineMaxLength} characters.");
+            if (filter.Check(r.DisplayName) is { } badName) return Error(badName);
+            if (filter.Check(headline) is { } badHeadline) return Error(badHeadline);
             if (NegativityGuard.Check(headline) is { } brag) return Error(brag);
 
             user.DisplayName = r.DisplayName.Trim();
@@ -61,11 +63,12 @@ public static class ProfileEndpoints
             return Results.Ok(new PhotoUploadResponse(req.PhotoUrl(name)!));
         }).DisableAntiforgery();
 
-        g.MapPost("/flaws", async (CreateFlawRequest r, ClaimsPrincipal me, SinDb db) =>
+        g.MapPost("/flaws", async (CreateFlawRequest r, ClaimsPrincipal me, SinDb db, ContentFilter filter) =>
         {
             var text = r.Text?.Trim() ?? "";
             if (text.Length < Limits.FlawMinLength || text.Length > Limits.FlawMaxLength)
                 return Error($"A flaw must be {Limits.FlawMinLength}-{Limits.FlawMaxLength} characters.");
+            if (filter.Check(text) is { } abusive) return Error(abusive);
             if (NegativityGuard.Check(text) is { } brag) return Error(brag);
 
             var userId = me.UserId();

@@ -29,7 +29,7 @@ public static class MatchEndpoints
                 .ToListAsync();
 
             var otherIds = matches.Select(m => m.OtherId).ToList();
-            var others = await db.Users.Where(u => otherIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id);
+            var others = await db.Users.Where(u => otherIds.Contains(u.Id) && !u.IsBanned).ToDictionaryAsync(u => u.Id);
 
             var result = matches
                 .Where(m => others.ContainsKey(m.OtherId))
@@ -50,12 +50,13 @@ public static class MatchEndpoints
             return Results.Ok(messages.Select(x => x.ToDto()));
         });
 
-        g.MapPost("/{matchId:guid}/messages", async (Guid matchId, SendMessageRequest r, ClaimsPrincipal principal, SinDb db) =>
+        g.MapPost("/{matchId:guid}/messages", async (Guid matchId, SendMessageRequest r, ClaimsPrincipal principal, SinDb db, ContentFilter filter) =>
         {
             var meId = principal.UserId();
             if (!await IsInMatch(db, matchId, meId)) return Results.NotFound();
             var text = r.Text?.Trim() ?? "";
             if (text.Length == 0 || text.Length > Limits.MessageMaxLength) return Error($"Messages must be 1-{Limits.MessageMaxLength} characters.");
+            if (filter.Check(text) is { } abusive) return Error(abusive);
 
             var msg = new Message { MatchId = matchId, SenderId = meId, Text = text };
             db.Messages.Add(msg);

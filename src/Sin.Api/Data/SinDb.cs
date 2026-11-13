@@ -11,6 +11,8 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
+    public DbSet<Block> Blocks => Set<Block>();
+    public DbSet<Report> Reports => Set<Report>();
 
     // SQLite has no timezone-aware type; everything we store is UTC, so mark it as such on read.
     protected override void ConfigureConventions(ModelConfigurationBuilder c) =>
@@ -39,6 +41,20 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
             e.HasKey(x => new { x.Provider, x.Subject });
             e.Property(x => x.Provider).HasMaxLength(32);
             e.Property(x => x.Subject).HasMaxLength(256);
+        });
+
+        b.Entity<Block>(e =>
+        {
+            e.HasKey(x => new { x.BlockerId, x.BlockedId });
+            e.HasIndex(x => x.BlockedId);
+        });
+
+        b.Entity<Report>(e =>
+        {
+            e.Property(x => x.Reason).HasConversion<string>();
+            e.Property(x => x.Status).HasConversion<string>();
+            e.Property(x => x.Details).HasMaxLength(Limits.ReportDetailsMaxLength);
+            e.HasIndex(x => x.Status);
         });
 
         b.Entity<Flaw>(e =>

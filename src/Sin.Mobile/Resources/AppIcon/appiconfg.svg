@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
-  <!-- red flag -->
-  <rect x="150" y="110" width="18" height="250" rx="9" fill="#F5EDEE" />
-  <path d="M168 118 C 220 96, 250 150, 310 128 L 310 238 C 250 260, 220 206, 168 228 Z" fill="#E5383B" />
-</svg>

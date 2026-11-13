@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -11,6 +14,10 @@ using Sin.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
+
+// Refuse to run in production with the placeholder signing key.
+if (!builder.Environment.IsDevelopment() && (config["Jwt:Key"] ?? "").Contains("CHANGE-ME"))
+    throw new InvalidOperationException("Set a real Jwt:Key (environment variable Jwt__Key) before running outside Development.");
 
 // Render (and most hosts) tell the app which port to listen on.
 if (Environment.GetEnvironmentVariable("PORT") is { Length: > 0 } port)
@@ -37,6 +44,30 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.KnownProxies.Clear();
 });
 
+// Moderation word list (editable text file next to the app).
+builder.Services.AddSingleton(ContentFilter.FromFile(Path.Combine(AppContext.BaseDirectory, "moderation-terms.txt")));
+
+// The mobile app doesn't need CORS; the browser preview (Expo web) does, so allow it in Development only.
+builder.Services.AddCors(o => o.AddPolicy("dev-web", p => p
+    .SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var u) && (u.IsLoopback || u.Host.StartsWith("192.168.") || u.Host.StartsWith("10.")))
+    .AllowAnyHeader().AllowAnyMethod()));
+
+// ---- Rate limiting: per signed-in user, or per IP when anonymous ----
+var limitsEnabled = config.GetValue("RateLimits:Enabled", true);
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    static string Key(HttpContext ctx) =>
+        ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon";
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => limitsEnabled
+        ? RateLimitPartition.GetFixedWindowLimiter(Key(ctx), _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1) })
+        : RateLimitPartition.GetNoLimiter("off"));
+    // Sign-up / login: slows down password guessing and spam accounts.
+    o.AddPolicy("auth", ctx => limitsEnabled
+        ? RateLimitPartition.GetFixedWindowLimiter(ctx.Connection.RemoteIpAddress?.ToString() ?? "anon", _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) })
+        : RateLimitPartition.GetNoLimiter("off"));
+});
+
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -53,6 +84,17 @@ var auth = builder.Services
             ValidAudience = config["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]!)),
             ValidateIssuerSigningKey = true,
+        };
+        // Tokens stop working the moment an account is deleted or banned.
+        o.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async ctx =>
+            {
+                var id = ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var db = ctx.HttpContext.RequestServices.GetRequiredService<SinDb>();
+                if (!Guid.TryParse(id, out var userId) || !await db.Users.AnyAsync(u => u.Id == userId && !u.IsBanned))
+                    ctx.Fail("Account no longer active.");
+            },
         };
     })
     // Short-lived cookie that carries the provider's result back to /api/auth/sso/{provider}.
@@ -121,19 +163,34 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("dev-web");
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseHsts();
+}
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseAntiforgery();
 
-app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+app.MapGet("/", () => app.Environment.IsDevelopment() ? Results.Redirect("/swagger") : Results.Redirect("/privacy.html"))
+    .ExcludeFromDescription();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" })).WithTags("Health");
 app.MapAuthEndpoints();
 app.MapSsoEndpoints();
 app.MapProfileEndpoints();
 app.MapFeedEndpoints();
 app.MapMatchEndpoints();
+app.MapSafetyEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();
+
+// Lets the test project spin up the API in-process.
+public partial class Program { }

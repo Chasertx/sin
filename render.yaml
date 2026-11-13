@@ -27,9 +27,12 @@ services:
         sync: false
       - key: Supabase__Bucket
         value: photos
-      # Seed demo users so the feed isn't empty while testing. Set to false for launch.
+      # Demo users are for local development only.
       - key: Demo__SeedUsers
-        value: "true"
+        value: "false"
+      # Moderation API (X-Admin-Key header). Render generates a random key; find it in the dashboard.
+      - key: Admin__ApiKey
+        generateValue: true
       # Optional SSO (leave blank to hide the buttons)
       - key: Sso__Google__ClientId
         sync: false

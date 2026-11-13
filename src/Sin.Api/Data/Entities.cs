@@ -17,6 +17,8 @@ public class User
     /// <summary>File name under wwwroot/uploads (your least flattering photo).</summary>
     public string? PhotoFile { get; set; }
     public bool IsDemo { get; set; }
+    /// <summary>Banned by a moderator: can't sign in, hidden everywhere.</summary>
+    public bool IsBanned { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<Flaw> Flaws { get; set; } = [];
@@ -42,6 +44,26 @@ public class Flaw
     public Guid UserId { get; set; }
     public FlawCategory Category { get; set; }
     public required string Text { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>BlockerId never sees BlockedId again (and vice versa).</summary>
+public class Block
+{
+    public Guid BlockerId { get; set; }
+    public Guid BlockedId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>A user report for moderators to review. Kept even if either account is deleted.</summary>
+public class Report
+{
+    public long Id { get; set; }
+    public Guid ReporterId { get; set; }
+    public Guid ReportedId { get; set; }
+    public ReportReason Reason { get; set; }
+    public string? Details { get; set; }
+    public ReportStatus Status { get; set; } = ReportStatus.Open;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

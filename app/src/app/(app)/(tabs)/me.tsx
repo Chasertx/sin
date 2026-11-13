@@ -118,12 +118,12 @@ export default function MyProblems() {
         <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
           <View style={styles.heroTop}>
             <Text style={styles.heroTitle}>My Problems</Text>
-            <Pressable onPress={signOut} style={styles.logout} hitSlop={8}>
+            <Pressable onPress={signOut} style={styles.logout} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out">
               <Ionicons name="log-out-outline" size={18} color={colors.white} />
               <Text style={styles.logoutText}>Log out</Text>
             </Pressable>
           </View>
-          <Pressable onPress={pickPhoto} style={styles.photo}>
+          <Pressable onPress={pickPhoto} style={styles.photo} accessibilityRole="button" accessibilityLabel="Change photo">
             {profile?.photoUrl ? (
               <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
             ) : (
@@ -186,7 +186,7 @@ export default function MyProblems() {
                   <CategoryTag category={f.category} />
                   <Txt>{f.text}</Txt>
                 </View>
-                <Pressable onPress={() => remove(f.id, f.text)} hitSlop={10} style={styles.del}>
+                <Pressable onPress={() => remove(f.id, f.text)} hitSlop={10} style={styles.del} accessibilityRole="button" accessibilityLabel={`Delete confession: ${f.text}`}>
                   <Ionicons name="close" size={18} color={colors.muted} />
                 </Pressable>
               </Card>

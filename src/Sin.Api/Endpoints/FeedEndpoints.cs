@@ -34,7 +34,8 @@ public static class FeedEndpoints
 
             var profiles = await db.Users
                 .Include(u => u.Flaws)
-                .Where(u => u.Id != me.Id && u.Age >= 18)
+                .Where(u => u.Id != me.Id && u.Age >= 18 && !u.IsBanned)
+                .Where(u => !db.Blocks.Any(b => (b.BlockerId == me.Id && b.BlockedId == u.Id) || (b.BlockerId == u.Id && b.BlockedId == me.Id)))
                 .Where(u => gendersIWant.Contains(u.Gender) && prefsThatWantMe.Contains(u.InterestedIn))
                 .Where(u => u.Flaws.Count >= Limits.MinFlawsToAppearInFeed)
                 .Where(u => !db.Swipes.Any(s => s.SwiperId == me.Id && s.TargetId == u.Id))
@@ -53,8 +54,10 @@ public static class FeedEndpoints
             var meId = principal.UserId();
             if (r.TargetUserId == meId) return Error("You can't swipe on yourself. We know you want to.");
 
-            var target = await db.Users.FirstOrDefaultAsync(u => u.Id == r.TargetUserId);
+            var target = await db.Users.FirstOrDefaultAsync(u => u.Id == r.TargetUserId && !u.IsBanned);
             if (target is null) return Results.NotFound();
+            if (await db.Blocks.AnyAsync(b => (b.BlockerId == meId && b.BlockedId == target.Id) || (b.BlockerId == target.Id && b.BlockedId == meId)))
+                return Results.NotFound();
 
             var existing = await db.Swipes.FindAsync(meId, target.Id);
             if (existing is not null) return Error("Already swiped on this person.", 409);

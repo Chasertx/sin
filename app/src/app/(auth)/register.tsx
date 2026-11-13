@@ -43,7 +43,7 @@ export default function Register() {
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: insets.bottom + 32, paddingHorizontal: 22, gap: 16 }}
         keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.back} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={24} color={colors.ink} />
         </Pressable>
 

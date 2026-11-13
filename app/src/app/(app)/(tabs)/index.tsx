@@ -75,7 +75,7 @@ export default function Discover() {
           <Text style={styles.brand}>Get What Ya Get</Text>
           <Txt variant="caption">Swipe right if you can handle it</Txt>
         </View>
-        <Pressable onPress={refill} style={styles.iconBtn} hitSlop={8}>
+        <Pressable onPress={refill} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Refresh">
           <Ionicons name="refresh" size={20} color={colors.ink} />
         </Pressable>
       </View>
@@ -137,7 +137,7 @@ function ActionButton({
   const size = big ? 74 : 62;
   return (
     <View style={{ alignItems: 'center', gap: 6 }}>
-      <Pressable onPress={onPress} style={({ pressed }) => [shadow, { transform: [{ scale: pressed ? 0.9 : 1 }] }]}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [shadow, { transform: [{ scale: pressed ? 0.9 : 1 }] }]}>
         <LinearGradient colors={gradient} style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={big ? 34 : 28} color={colors.white} />
         </LinearGradient>

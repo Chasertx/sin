@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, Field, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
+import { parseSsoRedirect } from '@/lib/sso';
 import { useSession } from '@/lib/session';
 import { colors, fonts, radius, sunset, tint } from '@/lib/theme';
 
@@ -52,18 +53,9 @@ export default function Welcome() {
         preferEphemeralSession: true,
       });
       if (result.type !== 'success') return;
-      const params = new URLSearchParams(result.url.split('#')[1] ?? '');
-      const error = params.get('error');
-      if (error) return Alert.alert(`${provider} sign-in`, error);
-      const token = params.get('token');
-      const userId = params.get('userId');
-      if (!token || !userId) return Alert.alert(`${provider} sign-in`, "The server didn't send back a session.");
-      await signIn({
-        token,
-        userId,
-        displayName: params.get('name') ?? '',
-        needsOnboarding: params.get('onboarding') === '1',
-      });
+      const outcome = parseSsoRedirect(result.url);
+      if (outcome.kind === 'error') return Alert.alert(`${provider} sign-in`, outcome.message);
+      await signIn(outcome.auth);
     } catch (e) {
       Alert.alert(`${provider} sign-in failed`, String(e));
     } finally {

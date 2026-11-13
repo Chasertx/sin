@@ -77,14 +77,14 @@ export default function Chat() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, shadow, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={26} color={colors.ink} />
         </Pressable>
         <Avatar name={name} uri={photo || null} size={40} />
         <Txt variant="heading" style={{ flex: 1 }}>
           {name}
         </Txt>
-        <Pressable onPress={unmatch} hitSlop={10}>
+        <Pressable onPress={unmatch} hitSlop={10} accessibilityRole="button" accessibilityLabel="Chat options">
           <Ionicons name="ellipsis-horizontal" size={22} color={colors.muted} />
         </Pressable>
       </View>
@@ -134,7 +134,7 @@ export default function Chat() {
           maxLength={LIMITS.messageMax}
           returnKeyType="send"
         />
-        <Pressable onPress={send} disabled={!draft.trim()} style={({ pressed }) => ({ opacity: !draft.trim() ? 0.4 : pressed ? 0.8 : 1 })}>
+        <Pressable onPress={send} disabled={!draft.trim()} accessibilityRole="button" accessibilityLabel="Send message" style={({ pressed }) => ({ opacity: !draft.trim() ? 0.4 : pressed ? 0.8 : 1 })}>
           <LinearGradient colors={sunset} style={styles.send}>
             <Ionicons name="arrow-up" size={22} color={colors.white} />
           </LinearGradient>

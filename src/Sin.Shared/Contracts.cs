@@ -58,6 +58,12 @@ public record SendMessageRequest(string Text);
 
 public record ErrorResponse(string Error);
 
+// ---- Safety ----
+public record ReportRequest(ReportReason Reason, string? Details);
+
+public record ReportDto(long Id, Guid ReporterId, Guid ReportedId, string ReportedName, ReportReason Reason,
+    string? Details, ReportStatus Status, DateTime CreatedAt);
+
 public record PhotoUploadResponse(string PhotoUrl);
 
 public static class Limits
@@ -68,4 +74,5 @@ public static class Limits
     public const int FlawMaxLength = 280;
     public const int HeadlineMaxLength = 140;
     public const int MessageMaxLength = 1000;
+    public const int ReportDetailsMaxLength = 1000;
 }

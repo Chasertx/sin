@@ -1,0 +1,33 @@
+# Blocked terms for ContentFilter: one per line, matched as whole words/phrases,
+# case-insensitive, with common character swaps undone (k1ll -> kill).
+# Extend this list as moderators see abuse in reports.
+
+# Threats / self-harm encouragement
+kill yourself
+kill urself
+kys
+go die
+i will kill you
+i'll kill you
+hope you die
+neck yourself
+
+# Sexual harassment
+send nudes
+send noods
+slut
+whore
+
+# Slurs
+retard
+retarded
+faggot
+fag
+nigger
+nigga
+tranny
+spic
+chink
+kike
+wetback
+dyke

@@ -50,7 +50,7 @@ export function Button({ title, onPress, variant = 'gradient', icon, loading, di
   const textColor = variant === 'gradient' || variant === 'dark' ? colors.white : colors.ink;
   const content = (
     <View style={styles.btnInner}>
-      {loading ? <ActivityIndicator color={textColor} /> : icon}
+      {loading ? <ActivityIndicator testID="button-spinner" color={textColor} /> : icon}
       <Text style={[styles.btnText, { color: textColor }]}>{title}</Text>
     </View>
   );
@@ -88,6 +88,7 @@ export function Field({ label, style, ...rest }: TextInputProps & { label?: stri
       {label ? <Txt variant="label">{label}</Txt> : null}
       <TextInput
         placeholderTextColor={colors.muted}
+        accessibilityLabel={label ?? rest.placeholder}
         {...rest}
         style={[styles.input, rest.multiline && { minHeight: 96, textAlignVertical: 'top', paddingTop: 14 }, style]}
       />
@@ -169,7 +170,10 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 const avatarColors = [colors.coral, colors.violet, colors.sky, colors.mint, colors.pink, colors.sunshine];
 
 export function Avatar({ name, uri, size = 56 }: { name: string; uri?: string | null; size?: number }) {
-  const bg = avatarColors[(name.charCodeAt(0) || 0) % avatarColors.length];
+  // Hash the whole name so people with different names rarely share a color.
+  let hash = 0;
+  for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  const bg = avatarColors[Math.abs(hash) % avatarColors.length];
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', backgroundColor: bg }}>
       {uri ? (

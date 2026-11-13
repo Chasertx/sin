@@ -18,5 +18,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Update="wwwroot\uploads\**" CopyToPublishDirectory="Never" />
+    <None Update="moderation-terms.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Sin.Api.Tests" />
   </ItemGroup>
 </Project>
