@@ -57,3 +57,27 @@ public class SsoCallbackTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
+
+public class SsoEmailVerificationTests
+{
+    private static System.Security.Claims.ClaimsPrincipal With(string? emailVerified) =>
+        new(new System.Security.Claims.ClaimsIdentity(emailVerified is null
+            ? []
+            : [new System.Security.Claims.Claim("email_verified", emailVerified)], "Google"));
+
+    [Theory]
+    [InlineData("true", true)]
+    [InlineData("True", true)]
+    [InlineData("false", false)]
+    [InlineData(null, false)]
+    [InlineData("yes", false)]
+    public void Google_needs_an_explicit_verified_claim(string? claim, bool expected) =>
+        Assert.Equal(expected, SsoEndpoints.IsEmailVerified("Google", With(claim)));
+
+    [Fact]
+    public void Apple_emails_are_always_verified() => Assert.True(SsoEndpoints.IsEmailVerified("Apple", With(null)));
+
+    [Fact]
+    public void Only_known_providers_are_trusted_even_with_the_claim() =>
+        Assert.False(SsoEndpoints.IsEmailVerified("Myspace", With("true")));
+}

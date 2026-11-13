@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -74,6 +75,8 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 // ---- Auth: JWT bearer ----
 builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<LoginThrottle>();
 var auth = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
@@ -113,6 +116,9 @@ if (config["Sso:Google:ClientId"] is { Length: > 0 } googleId)
         o.SignInScheme = SsoEndpoints.ExternalCookie;
         o.ClientId = googleId;
         o.ClientSecret = config["Sso:Google:ClientSecret"]!;
+        // Needed to link Google logins to existing accounts safely (only verified emails).
+        o.ClaimActions.MapJsonKey("email_verified", "email_verified");
+        o.ClaimActions.MapJsonKey("email_verified", "verified_email");
     });
 }
 
@@ -181,6 +187,15 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
+app.Use(async (ctx, next) =>
+{
+    var h = ctx.Response.Headers;
+    h["X-Content-Type-Options"] = "nosniff";
+    h["X-Frame-Options"] = "DENY";
+    h["Referrer-Policy"] = "no-referrer";
+    h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    await next();
+});
 if (app.Environment.IsDevelopment())
 {
     app.UseCors("dev-web");

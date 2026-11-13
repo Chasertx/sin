@@ -43,6 +43,8 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         { Valid() with { Email = "not-an-email" }, "valid email" },
         { Valid() with { Password = "short" }, "8 characters" },
+        { Valid() with { Password = new string('a', 73) }, "too long" },
+        { Valid() with { Password = new string('é', 37) }, "too long" }, // 74 UTF-8 bytes
         { Valid() with { DisplayName = "" }, "Display name" },
         { Valid() with { DisplayName = new string('x', 51) }, "Display name" },
         { Valid() with { Age = 17 }, "18" },
@@ -83,7 +85,7 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var u = await factory.CreateUserAsync();
         var error = await (await _anon.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, password))).ErrorAsync(HttpStatusCode.Unauthorized);
-        Assert.Equal("Wrong email or password.", error);
+        Assert.Equal(Sin.Api.Endpoints.AuthEndpoints.LoginFailed, error);
     }
 
     [Fact]
@@ -91,11 +93,11 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var error = await (await _anon.PostJsonAsync("/api/auth/login", new LoginRequest(TestHelpers.UniqueEmail(), "password123")))
             .ErrorAsync(HttpStatusCode.Unauthorized);
-        Assert.Equal("Wrong email or password.", error);
+        Assert.Equal(Sin.Api.Endpoints.AuthEndpoints.LoginFailed, error);
     }
 
     [Fact]
-    public async Task Login_tells_sso_only_accounts_to_use_their_provider()
+    public async Task Sso_only_accounts_get_the_same_message_as_everyone_else()
     {
         var email = TestHelpers.UniqueEmail();
         await factory.WithDbAsync(async db =>
@@ -104,7 +106,8 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
             await db.SaveChangesAsync();
         });
         var error = await (await _anon.PostJsonAsync("/api/auth/login", new LoginRequest(email, "anything123"))).ErrorAsync(HttpStatusCode.Unauthorized);
-        Assert.Contains("Google/Apple", error);
+        Assert.Equal(Sin.Api.Endpoints.AuthEndpoints.LoginFailed, error); // doesn't reveal the account exists
+        Assert.Contains("Google or Apple", error);
     }
 
     [Fact]
@@ -148,6 +151,51 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, (await _anon.GetAsync("/health")).StatusCode);
 }
 
+public class LoginLockoutTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    [Fact]
+    public async Task Five_wrong_passwords_lock_the_account_even_with_the_right_password()
+    {
+        var u = await factory.CreateUserAsync();
+        var c = factory.CreateClient();
+        for (var i = 0; i < 5; i++)
+            await (await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, "wrong-password"))).ErrorAsync(HttpStatusCode.Unauthorized);
+
+        var locked = await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, u.Password));
+        Assert.Contains("Too many attempts", await locked.ErrorAsync(HttpStatusCode.TooManyRequests));
+    }
+
+    [Fact]
+    public async Task Unknown_emails_lock_the_same_way_so_lockout_reveals_nothing()
+    {
+        var c = factory.CreateClient();
+        var email = TestHelpers.UniqueEmail("ghost");
+        for (var i = 0; i < 5; i++) await c.PostJsonAsync("/api/auth/login", new LoginRequest(email, "x-password"));
+        await (await c.PostJsonAsync("/api/auth/login", new LoginRequest(email, "x-password"))).ErrorAsync(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task A_successful_login_resets_the_counter()
+    {
+        var u = await factory.CreateUserAsync();
+        var c = factory.CreateClient();
+        for (var i = 0; i < 4; i++) await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, "wrong-password"));
+        await (await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, u.Password))).ReadAsync<AuthResponse>();
+        for (var i = 0; i < 4; i++) await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, "wrong-password"));
+        await (await c.PostJsonAsync("/api/auth/login", new LoginRequest(u.Email, u.Password))).ReadAsync<AuthResponse>();
+    }
+
+    [Fact]
+    public async Task Lockout_is_per_account_not_global()
+    {
+        var victim = await factory.CreateUserAsync();
+        var other = await factory.CreateUserAsync();
+        var c = factory.CreateClient();
+        for (var i = 0; i < 5; i++) await c.PostJsonAsync("/api/auth/login", new LoginRequest(victim.Email, "wrong-password"));
+        await (await c.PostJsonAsync("/api/auth/login", new LoginRequest(other.Email, other.Password))).ReadAsync<AuthResponse>();
+    }
+}
+
 public class RateLimitTests(RateLimitedApiFactory factory) : IClassFixture<RateLimitedApiFactory>
 {
     [Fact]
@@ -156,9 +204,27 @@ public class RateLimitTests(RateLimitedApiFactory factory) : IClassFixture<RateL
         var c = factory.CreateClient();
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 12; i++)
-            statuses.Add((await c.PostJsonAsync("/api/auth/login", new LoginRequest("nobody@test.app", "password123"))).StatusCode);
+            statuses.Add((await c.PostJsonAsync("/api/auth/login", new LoginRequest(TestHelpers.UniqueEmail("nobody"), "password123"))).StatusCode); // new email each time: tests the per-IP limit, not the per-account lockout
 
         Assert.All(statuses.Take(10), s => Assert.Equal(HttpStatusCode.Unauthorized, s));
         Assert.Equal(HttpStatusCode.TooManyRequests, statuses[^1]);
     }
+}
+
+public class SecurityHeaderTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/api/me")] // even on 401s
+    public async Task Every_response_carries_security_headers(string url)
+    {
+        var res = await factory.CreateClient().GetAsync(url);
+        Assert.Equal("nosniff", res.Headers.GetValues("X-Content-Type-Options").Single());
+        Assert.Equal("DENY", res.Headers.GetValues("X-Frame-Options").Single());
+        Assert.Equal("no-referrer", res.Headers.GetValues("Referrer-Policy").Single());
+    }
+
+    [Fact]
+    public async Task Swagger_is_not_exposed_outside_development() =>
+        Assert.Equal(HttpStatusCode.NotFound, (await factory.CreateClient().GetAsync("/swagger/v1/swagger.json")).StatusCode);
 }

@@ -84,7 +84,15 @@ public static class FeedEndpoints
                 }
             }
 
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two taps raced: the other request already recorded this swipe.
+                return Error("Already swiped on this person.", 409);
+            }
             return Results.Ok(new SwipeResult(match is not null, match?.Id));
         });
     }

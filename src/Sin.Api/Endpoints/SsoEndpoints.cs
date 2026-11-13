@@ -62,9 +62,18 @@ public static class SsoEndpoints
 
             if (user is null)
             {
-                // 2) Same email as an existing account? Google and Apple only hand out verified emails.
+                // 2) Same email as an existing account? Only link if the provider vouches the email
+                //    is verified; otherwise anyone could claim someone else's account (audit #3).
+                var verified = IsEmailVerified(scheme.Name, p);
                 if (email is not null)
-                    user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+                {
+                    var existing = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+                    if (existing is not null && !verified)
+                        return Results.Redirect($"{callback}#error={Uri.EscapeDataString("An account with this email already exists. Log in with your password instead.")}");
+                    user = existing;
+                }
+                // An unverified email isn't stored either, so it can't squat a real person's address.
+                if (!verified) email = null;
 
                 // 3) Brand-new user. Age 0 = needs onboarding; hidden from the feed until they finish.
                 if (user is null)
@@ -89,6 +98,9 @@ public static class SsoEndpoints
                 logs.CreateLogger("Sso").LogInformation("Linked {Provider} login to user {UserId}", scheme.Name, user.Id);
             }
 
+            if (user.IsBanned)
+                return Results.Redirect($"{callback}#error={Uri.EscapeDataString("This account has been suspended.")}");
+
             var fragment = string.Join("&",
                 $"token={Uri.EscapeDataString(tokens.Create(user))}",
                 $"userId={user.Id}",
@@ -97,6 +109,15 @@ public static class SsoEndpoints
             return Results.Redirect($"{callback}#{fragment}");
         }).ExcludeFromDescription();
     }
+
+    /// <summary>
+    /// Apple only issues verified emails. Google says so explicitly in its "email_verified" claim
+    /// (mapped from the userinfo response in Program.cs). Anything else counts as unverified.
+    /// </summary>
+    internal static bool IsEmailVerified(string provider, ClaimsPrincipal principal) =>
+        provider == "Apple" ||
+        (provider == "Google" &&
+         string.Equals(principal.FindFirstValue("email_verified"), "true", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// Where to send the user back to. Only the app's own scheme is allowed (never arbitrary URLs,
