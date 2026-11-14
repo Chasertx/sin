@@ -56,6 +56,17 @@
       "typedRoutes": false,
       "reactCompiler": true
     },
-    "description": "The dating app where you lead with your flaws. What can you handle?"
+    "description": "The dating app where you lead with your flaws. What can you handle?",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "79dc5325-fd21-48da-93c2-cc8be63a04ee"
+      }
+    },
+    "owner": "chaxter"
   }
 }
