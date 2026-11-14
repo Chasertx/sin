@@ -8,7 +8,7 @@ Everything in the code that the stores require is done. What's left needs your a
 | --- | --- |
 | 18+ only | Sign-up and profile edits reject ages under 18; sign-up states the 18+ rule |
 | Terms accepted at sign-up, no tolerance for abuse | Sign-up screen links to the terms and privacy policy |
-| Filter objectionable content | Word filter on names, headlines, confessions and messages |
+| Filter objectionable content | Word filter on names, headlines, confessions and messages; AI screen for porn and gore on photos and profile text (needs the key in Step 2) |
 | Report a user, block a user | Flag button on Discover; "..." menu in chat |
 | Delete account inside the app | Possibly Icks → Account → Delete account |
 | Public privacy policy and terms | `/privacy.html` and `/terms.html` on the API |
@@ -31,8 +31,9 @@ Sign-in is email and password only for version 1. Google sign-in stays off: turn
 
 1. Create the production Supabase project, `get-what-ya-get-prod`, with a **public** storage bucket named `photos`.
 2. In Render: New → Blueprint → pick the `sin` repo. It reads `render.yaml` and asks for three secrets: the session-pooler connection string, the Supabase URL, and the service key.
-3. Open `https://<your-service>.onrender.com/health`. It should say `{"status":"ok"}`.
-4. If the address is not `https://get-what-ya-get-api-3dtp.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
+3. In the Render dashboard, open the service's Environment tab and add `Moderation__ApiKey` with an Anthropic API key (console.anthropic.com → API keys). Until it is set, photos and profile text are **not** screened for porn or gore; the API logs a warning at startup to say so.
+4. Open `https://<your-service>.onrender.com/health`. It should say `{"status":"ok"}`.
+5. If the address is not `https://get-what-ya-get-api-3dtp.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
 
 Render's free plan puts the API to sleep after 15 minutes idle, and waking takes up to a minute. A store reviewer who hits that sees an app that won't load. Use the $7 per month plan (or your Azure hosting) before submitting for review.
 
@@ -98,13 +99,13 @@ Both stores ask what data the app collects. These answers match what the app doe
 | Email address | Yes | Account, sign-in | Yes |
 | Name (display name) | Yes | App functionality | Yes |
 | Age, gender, who they're interested in | Yes | App functionality (matching) | Yes |
-| Photos | Yes, optional | App functionality | Yes |
+| Photos | Yes, optional | App functionality, safety screening | Yes |
 | Messages, confessions, headline | Yes | App functionality | Yes |
 | Reports and blocks | Yes | Safety | Yes |
 | Location, contacts, advertising ID, health, financial | No | | |
 
 - Tracking and ads: none.
-- Data sold or shared with third parties for their own use: none.
+- Data sold or shared with third parties for their own use: none. Photos and profile text go to Anthropic only as a service provider, to screen them for prohibited content; say so if a form asks about processors.
 - Encrypted in transit: yes.
 - Users can request deletion: yes, in the app.
 - Apple export compliance: uses only standard encryption (already declared in `app.json`).
@@ -115,7 +116,7 @@ Reviewers need a login. Create two accounts in the live app (so one can show the
 
 > Sign in with: `<review account email>` / `<password>`.
 > This is a dating app for adults with user-generated text and one optional photo.
-> Safety features: a word filter on all text; Report and Block from the flag button on the Discover screen and the "..." menu in chat; reports are reviewed within 24 hours and offending accounts are banned. Account deletion: Possibly Icks tab → Account → Delete account.
+> Safety features: a word filter on all text; automatic AI screening that refuses pornographic or gory photos and profile text before they are published; Report and Block from the flag button on the Discover screen and the "..." menu in chat; reports are reviewed within 24 hours and offending accounts are banned. Account deletion: Possibly Icks tab → Account → Delete account.
 
 Then submit:
 

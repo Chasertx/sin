@@ -13,7 +13,8 @@ namespace Sin.Api.Tests.Infrastructure;
 
 /// <summary>
 /// Runs the real API in-process against a throwaway SQLite file, with demo data, rate limits
-/// and SSO off unless a test opts in. Photos go to an in-memory store.
+/// and SSO off unless a test opts in. Photos go to an in-memory store, and the AI moderator is a
+/// fake that allows everything unless a test says otherwise.
 /// </summary>
 public class ApiFactory : WebApplicationFactory<Program>
 {
@@ -27,6 +28,8 @@ public class ApiFactory : WebApplicationFactory<Program>
     protected virtual string EnvironmentName => "Testing";
 
     public InMemoryPhotoStore Photos { get; } = new();
+
+    public FakeModerator Moderator { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -42,6 +45,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["RateLimits:Enabled"] = "false",
             ["Admin:ApiKey"] = AdminKey,
             ["Supabase:Url"] = "",
+            ["Moderation:ApiKey"] = "",
             ["Sso:Google:ClientId"] = "",
             ["Sso:Apple:ClientId"] = "",
         };
@@ -52,6 +56,8 @@ public class ApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IPhotoStore>();
             services.AddSingleton<IPhotoStore>(Photos);
+            services.RemoveAll<IContentModerator>();
+            services.AddSingleton<IContentModerator>(Moderator);
         });
     }
 
@@ -123,4 +129,33 @@ public class InMemoryPhotoStore : IPhotoStore
     }
 
     public string Url(string name, HttpRequest request) => $"https://photos.test/{name}";
+}
+
+/// <summary>Stands in for the AI moderator: tests choose the verdicts and can see what was checked.</summary>
+public class FakeModerator : IContentModerator
+{
+    public ModerationResult PhotoVerdict { get; set; } = ModerationResult.Allowed;
+    public Func<string, ModerationResult> TextVerdict { get; set; } = _ => ModerationResult.Allowed;
+    public List<byte[]> PhotosChecked { get; } = [];
+    public List<(string Kind, string Text)> TextsChecked { get; } = [];
+
+    public void Reset()
+    {
+        PhotoVerdict = ModerationResult.Allowed;
+        TextVerdict = _ => ModerationResult.Allowed;
+        PhotosChecked.Clear();
+        TextsChecked.Clear();
+    }
+
+    public Task<ModerationResult> CheckPhotoAsync(byte[] jpeg, CancellationToken ct = default)
+    {
+        PhotosChecked.Add(jpeg);
+        return Task.FromResult(PhotoVerdict);
+    }
+
+    public Task<ModerationResult> CheckTextAsync(string kind, string text, CancellationToken ct = default)
+    {
+        TextsChecked.Add((kind, text));
+        return Task.FromResult(TextVerdict(text));
+    }
 }

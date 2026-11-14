@@ -13,6 +13,19 @@ public static class PhotoProcessor
     /// <summary>Refuse absurd dimensions before decoding (a tiny file can claim to be gigantic).</summary>
     public const long MaxPixels = 50_000_000;
 
+    /// <summary>Size sent to the AI moderator: plenty to recognise nudity or gore, a fraction of the cost.</summary>
+    public const uint ModerationDimension = 768;
+
+    /// <summary>A smaller copy of an already-normalized JPEG for <see cref="IContentModerator"/>.</summary>
+    public static byte[] ModerationCopy(byte[] jpeg)
+    {
+        using var image = new MagickImage(jpeg, new MagickReadSettings { Format = MagickFormat.Jpeg });
+        if (image.Width <= ModerationDimension && image.Height <= ModerationDimension) return jpeg;
+        image.Resize(new MagickGeometry(ModerationDimension, ModerationDimension));
+        image.Quality = 80;
+        return image.ToByteArray();
+    }
+
     // Only decode formats we mean to accept, whatever the upload claims to be.
     private static readonly MagickFormat[] Allowed = [MagickFormat.Jpeg, MagickFormat.Jpg, MagickFormat.Png, MagickFormat.WebP];
 

@@ -7,7 +7,8 @@ namespace Sin.Api.Services;
 /// Blocks abusive text (harassment, slurs, threats) in anything users can write.
 /// Terms live in moderation-terms.txt (one per line, # for comments) so moderators can
 /// extend the list without a code change. This is a first line of defense, not a full
-/// moderation system; pair it with user reports and, at scale, an AI moderation API.
+/// moderation system: <see cref="IContentModerator"/> screens for porn and gore, and user
+/// reports catch the rest.
 /// </summary>
 public class ContentFilter
 {

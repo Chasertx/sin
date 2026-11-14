@@ -30,6 +30,10 @@ services:
         sync: false
       - key: Supabase__Bucket
         value: ick
+      # AI screening of photos and profile text for porn and gore: an Anthropic API key
+      # (console.anthropic.com > API keys). Without it nothing is screened.
+      - key: Moderation__ApiKey
+        sync: false
       # Demo users are for local development only.
       - key: Demo__SeedUsers
         value: "false"

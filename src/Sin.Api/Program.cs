@@ -49,6 +49,16 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 // Moderation word list (editable text file next to the app).
 builder.Services.AddSingleton(ContentFilter.FromFile(Path.Combine(AppContext.BaseDirectory, "moderation-terms.txt")));
 
+// AI screen for porn and gore on photos and profile text. On when an Anthropic API key is configured.
+if (config["Moderation:ApiKey"] is { Length: > 0 } moderationKey)
+    builder.Services.AddSingleton<IContentModerator>(sp => new ClaudeModerator(
+        // Uploads wait on this call, so give up quickly rather than hang the app.
+        new Anthropic.AnthropicClient { ApiKey = moderationKey, Timeout = TimeSpan.FromSeconds(15), MaxRetries = 1 },
+        config["Moderation:Model"] is { Length: > 0 } moderationModel ? moderationModel : ClaudeModerator.DefaultModel,
+        sp.GetRequiredService<ILogger<ClaudeModerator>>()));
+else
+    builder.Services.AddSingleton<IContentModerator, NoModerator>();
+
 // The mobile app doesn't need CORS; the browser preview (Expo web) does, so allow it in Development only.
 builder.Services.AddCors(o => o.AddPolicy("dev-web", p => p
     .SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var u) && (u.IsLoopback || u.Host.StartsWith("192.168.") || u.Host.StartsWith("10.")))
@@ -160,6 +170,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment() && app.Services.GetRequiredService<IContentModerator>() is NoModerator)
+    app.Logger.LogWarning("Moderation:ApiKey is not set: photos and profile text are NOT being screened for porn or gore.");
 
 // ---- Create DB + seed demo data on startup ----
 using (var scope = app.Services.CreateScope())

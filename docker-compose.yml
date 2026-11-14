@@ -14,6 +14,8 @@ services:
       # Photos: local volume by default; Supabase Storage when these are set.
       Supabase__Url: ${SUPABASE_URL:-}
       Supabase__ServiceKey: ${SUPABASE_SERVICE_KEY:-}
+      # AI screening of photos and profile text (porn, gore). Blank = off.
+      Moderation__ApiKey: ${ANTHROPIC_API_KEY:-}
       # SSO: put real values in a .env file next to this one (see .env.example). Blank = provider off.
       Sso__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Sso__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
