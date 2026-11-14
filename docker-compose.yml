@@ -22,10 +22,9 @@ services:
       Sso__Apple__KeyId: ${APPLE_KEY_ID:-}
       Sso__Apple__PrivateKeyPath: /secrets/apple_authkey.p8
     volumes:
-      - sin-data:/data                       # SQLite database
+      - ./data:/data                         # SQLite database, as a normal file: data/sin.db (open it in DBeaver)
       - sin-uploads:/app/wwwroot/uploads     # uploaded photos
       - ./secrets:/secrets:ro                # drop AuthKey_XXXX.p8 here as apple_authkey.p8
 
 volumes:
-  sin-data:
   sin-uploads:
