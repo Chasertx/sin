@@ -12,7 +12,7 @@ import { PeekCard, SwipeCard, type SwipeCardHandle } from '@/components/SwipeCar
 import { Avatar, Button, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { colors, coralish, fonts, minty, radius, shadow, sunset, tint } from '@/lib/theme';
+import { colors, coralish, fonts, minty, radius, shadow, brand, tint } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
 export default function Discover() {
@@ -94,7 +94,7 @@ export default function Discover() {
         {top ? (
           <SwipeCard key={top.id} ref={cardRef} profile={top} onSwiped={onSwiped} />
         ) : loading ? (
-          <ActivityIndicator size="large" color={colors.pink} />
+          <ActivityIndicator size="large" color={colors.primary} />
         ) : (
           <View style={styles.empty}>
             <Text style={{ fontSize: 56 }}>{error ? '🔌' : '🫠'}</Text>
@@ -181,7 +181,7 @@ function MatchCelebration({
 }) {
   return (
     <Modal visible={!!match} transparent animationType="fade" onRequestClose={onClose}>
-      <LinearGradient colors={[tint('#FF8A4C', 0.97), tint('#FF4E88', 0.97), tint('#7B5CFF', 0.97)]} style={styles.matchWrap}>
+      <LinearGradient colors={[tint(brand[0], 0.97), tint(brand[1], 0.97), tint(brand[2], 0.97)]} style={styles.matchWrap}>
         {match ? (
           <Animated.View entering={ZoomIn.springify().damping(12)} style={styles.matchInner}>
             <Text style={{ fontSize: 64 }}>🎉</Text>
@@ -211,7 +211,7 @@ function MatchCelebration({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 },
-  brand: { fontFamily: fonts.black, fontSize: 32, color: colors.pink, letterSpacing: -0.5 },
+  brand: { fontFamily: fonts.black, fontSize: 32, color: colors.primary, letterSpacing: -0.5 },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
   deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },

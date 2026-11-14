@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fonts } from '@/lib/theme';
+import { colors, fonts, shadow } from '@/lib/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -20,7 +20,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.pink,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: { fontFamily: fonts.heavy, fontSize: 12 },
         tabBarStyle: {
@@ -30,7 +30,7 @@ export default function TabsLayout() {
           paddingTop: 8,
           paddingBottom: bottom,
           elevation: 12,
-          shadowColor: '#7B3F2A',
+          shadowColor: shadow.shadowColor,
           shadowOpacity: 0.08,
           shadowRadius: 16,
         },

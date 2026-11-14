@@ -1,4 +1,4 @@
-import { categoryMeta, colors, sunset, tint } from '../theme';
+import { categoryMeta, colors, brand, tint } from '../theme';
 import { CATEGORIES, GENDERS, INTERESTS, genderLabel } from '../types';
 
 describe('tint', () => {
@@ -29,7 +29,7 @@ describe('categoryMeta', () => {
 
 describe('palette', () => {
   it('uses valid hex colors throughout', () => {
-    for (const c of [...Object.values(colors), ...sunset]) expect(c).toMatch(/^#[0-9A-F]{6}$/i);
+    for (const c of [...Object.values(colors), ...brand]) expect(c).toMatch(/^#[0-9A-F]{6}$/i);
   });
 });
 

@@ -109,7 +109,7 @@ export function SafetySheet({ visible, userId, name, onClose, onRemoved, extraAc
                     accessibilityRole="radio"
                     accessibilityState={{ selected: on }}
                     style={[styles.reason, on && styles.reasonOn]}>
-                    <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={20} color={on ? colors.pink : colors.muted} />
+                    <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={20} color={on ? colors.primary : colors.muted} />
                     <Txt>{r.label}</Txt>
                   </Pressable>
                 );
@@ -142,10 +142,10 @@ function Row({ icon, label, onPress, danger }: { icon: keyof typeof Ionicons.gly
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: tint('#1E1B2E', 0.45) },
+  backdrop: { flex: 1, backgroundColor: tint(colors.ink, 0.45) },
   sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: 18, paddingTop: 10, gap: 4, maxHeight: '85%' },
   grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 10, borderRadius: radius.md },
   reason: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.bg },
-  reasonOn: { backgroundColor: tint(colors.pink, 0.12) },
+  reasonOn: { backgroundColor: tint(colors.primary, 0.12) },
 });

@@ -12,7 +12,7 @@ import { Button, Card, Field, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { parseSsoRedirect } from '@/lib/sso';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius, sunset, tint } from '@/lib/theme';
+import { colors, fonts, radius, brand, tint } from '@/lib/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -66,8 +66,8 @@ export default function Welcome() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <StatusBar style="light" />
-      <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <View style={[styles.blob, { top: -80, right: -60, backgroundColor: tint(colors.sunshine, 0.45) }]} />
+      <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <View style={[styles.blob, { top: -80, right: -60, backgroundColor: tint(colors.white, 0.28) }]} />
       <View style={[styles.blob, { bottom: 120, left: -90, backgroundColor: tint(colors.white, 0.18) }]} />
 
       <ScrollView
@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-8deg' }],
   },
   brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, textAlign: 'center', letterSpacing: -2 },
-  tagline: { fontFamily: fonts.black, fontSize: 22, color: '#FFE7A3', marginTop: 10 },
+  tagline: { fontFamily: fonts.black, fontSize: 22, color: '#E3FFF5', marginTop: 10 },
   pitch: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9), marginTop: 6, textAlign: 'center' },
   sheet: { gap: 12, borderRadius: radius.xl, padding: 20 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
   divider: { flex: 1, height: 1, backgroundColor: colors.line },
   footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 4 },
-  link: { fontFamily: fonts.heavy, fontSize: 14, color: colors.pink },
-  demo: { fontFamily: fonts.bold, fontSize: 13, color: colors.violet, textAlign: 'center' },
+  link: { fontFamily: fonts.heavy, fontSize: 14, color: colors.primary },
+  demo: { fontFamily: fonts.bold, fontSize: 13, color: colors.deep, textAlign: 'center' },
 });

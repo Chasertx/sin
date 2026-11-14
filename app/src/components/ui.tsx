@@ -16,7 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { categoryMeta, colors, fonts, radius, shadow, sunset, tint } from '@/lib/theme';
+import { categoryMeta, colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
 import type { FlawCategory } from '@/lib/types';
 
 // ---------- Text ----------
@@ -71,7 +71,7 @@ export function Button({ title, onPress, variant = 'gradient', icon, loading, di
         style,
       ]}>
       {variant === 'gradient' ? (
-        <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
+        <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.btnGradient}>
           {content}
         </LinearGradient>
       ) : (
@@ -101,7 +101,7 @@ export function Chip({
   label,
   selected,
   onPress,
-  color = colors.violet,
+  color = colors.deep,
 }: {
   label: string;
   selected?: boolean;
@@ -167,7 +167,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
   return <View style={[styles.card, shadow, style]}>{children}</View>;
 }
 
-const avatarColors = [colors.coral, colors.violet, colors.sky, colors.mint, colors.pink, colors.sunshine];
+const avatarColors = [colors.coral, colors.deep, colors.sky, colors.mint, colors.primary, colors.sunshine];
 
 export function Avatar({ name, uri, size = 56 }: { name: string; uri?: string | null; size?: number }) {
   // Hash the whole name so people with different names rarely share a color.

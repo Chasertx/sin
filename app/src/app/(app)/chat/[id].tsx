@@ -9,7 +9,7 @@ import { SafetySheet } from '@/components/SafetySheet';
 import { Avatar, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius, shadow, sunset } from '@/lib/theme';
+import { colors, fonts, radius, shadow, brand } from '@/lib/theme';
 import { LIMITS, type Message } from '@/lib/types';
 
 const POLL_MS = 3000;
@@ -109,7 +109,7 @@ export default function Chat() {
           const time = new Date(item.sentAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
           return mine ? (
             <View style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
-              <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.mine]}>
+              <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.mine]}>
                 <Text style={[styles.bubbleText, { color: colors.white }]}>{item.text}</Text>
               </LinearGradient>
               <Text style={[styles.time, { textAlign: 'right' }]}>{time}</Text>
@@ -137,7 +137,7 @@ export default function Chat() {
           returnKeyType="send"
         />
         <Pressable onPress={send} disabled={!draft.trim()} accessibilityRole="button" accessibilityLabel="Send message" style={({ pressed }) => ({ opacity: !draft.trim() ? 0.4 : pressed ? 0.8 : 1 })}>
-          <LinearGradient colors={sunset} style={styles.send}>
+          <LinearGradient colors={brand} style={styles.send}>
             <Ionicons name="arrow-up" size={22} color={colors.white} />
           </LinearGradient>
         </Pressable>

@@ -15,7 +15,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { CategoryTag, Txt } from '@/components/ui';
-import { colors, fonts, radius, shadow, sunset, tint } from '@/lib/theme';
+import { colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
 export interface SwipeCardHandle {
@@ -123,14 +123,14 @@ function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
         {profile.photoUrl ? (
           <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
         ) : (
-          <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill}>
+          <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill}>
             <View style={styles.noPhoto}>
               <Text style={styles.noPhotoInitial}>{profile.displayName.slice(0, 1)}</Text>
               <Text style={styles.noPhotoCaption}>No photo. Mystery is a red flag too 🙈</Text>
             </View>
           </LinearGradient>
         )}
-        <LinearGradient colors={['transparent', 'rgba(20,10,30,0.75)']} style={styles.photoShade} />
+        <LinearGradient colors={['transparent', 'rgba(8,24,19,0.75)']} style={styles.photoShade} />
         <View style={styles.nameRow}>
           <Text style={styles.name}>{profile.displayName}</Text>
           <Text style={styles.age}>{profile.age}</Text>

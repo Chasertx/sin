@@ -1,13 +1,13 @@
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-body { margin: 0; background: #FFF6F1; color: #1E1B2E; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { margin: 0; background: #F2FBF7; color: #10261F; font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 main { max-width: 680px; margin: 0 auto; padding: 32px 20px 64px; }
-.brand { margin: 0 0 8px; font-weight: 900; font-size: 20px; color: #FF4E88; }
+.brand { margin: 0 0 8px; font-weight: 900; font-size: 20px; color: #0B8566; }
 h1 { margin: 0; font-size: 34px; line-height: 1.15; letter-spacing: -0.5px; }
 h2 { margin: 32px 0 8px; font-size: 20px; }
-.meta { margin: 6px 0 24px; color: #7C7690; font-size: 14px; }
+.meta { margin: 6px 0 24px; color: #647A72; font-size: 14px; }
 ul { padding-left: 22px; }
 li { margin: 6px 0; }
-a { color: #7B5CFF; }
+a { color: #0B8566; }
 .todo { background: #FFF1CC; padding: 1px 6px; border-radius: 6px; }
-.foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid #F1E4DC; }
+.foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid #D8ECE4; }

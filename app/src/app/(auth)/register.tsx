@@ -63,8 +63,8 @@ export default function Register() {
           </View>
         </View>
 
-        <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.violet} />
-        <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
+        <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.deep} />
+        <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.primary} />
 
         <Button title="Let's go" onPress={submit} loading={busy} style={{ marginTop: 8 }} />
         <Txt variant="caption" style={{ textAlign: 'center' }}>
@@ -86,5 +86,5 @@ export default function Register() {
 const styles = StyleSheet.create({
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', gap: 12 },
-  legal: { color: colors.violet, textDecorationLine: 'underline' },
+  legal: { color: colors.deep, textDecorationLine: 'underline' },
 });

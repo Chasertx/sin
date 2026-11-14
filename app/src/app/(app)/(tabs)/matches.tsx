@@ -47,7 +47,7 @@ export default function Matches() {
         keyExtractor={(m) => m.matchId}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 10, flexGrow: 1 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => (setRefreshing(true), load())} tintColor={colors.pink} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => (setRefreshing(true), load())} tintColor={colors.primary} />
         }
         ListHeaderComponent={
           fresh.length > 0 ? (
@@ -108,8 +108,8 @@ function open(m: Match) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, padding: 14, borderRadius: radius.lg },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.pink },
-  newRing: { padding: 3, borderRadius: 40, borderWidth: 3, borderColor: colors.pink },
+  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
+  newRing: { padding: 3, borderRadius: 40, borderWidth: 3, borderColor: colors.primary },
   newName: { fontFamily: fonts.heavy, fontSize: 13, color: colors.ink },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
 });

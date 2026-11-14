@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, CategoryTag, ChipGroup, Field, Txt } from '@/components/ui';
 import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { categoryMeta, colors, fonts, radius, sunset, tint } from '@/lib/theme';
+import { categoryMeta, colors, fonts, radius, brand, tint } from '@/lib/theme';
 import {
   CATEGORIES,
   GENDERS,
@@ -135,7 +135,7 @@ export default function MyProblems() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         keyboardShouldPersistTaps="handled">
         {/* Header */}
-        <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
+        <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
           <View style={styles.heroTop}>
             <Text style={styles.heroTitle}>Possibly Icks</Text>
             <Pressable onPress={signOut} style={styles.logout} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out">
@@ -149,7 +149,7 @@ export default function MyProblems() {
                 <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <View style={styles.photoEmpty}>
-                  <Ionicons name="camera" size={30} color={colors.pink} />
+                  <Ionicons name="camera" size={30} color={colors.primary} />
                   <Text style={styles.photoHint}>Worst photo</Text>
                 </View>
               )}
@@ -169,7 +169,7 @@ export default function MyProblems() {
               <Txt style={{ color: colors.inkSoft }}>Add your age and who you're into below, then confess something.</Txt>
             </View>
           ) : flaws.length === 0 ? (
-            <View style={[styles.banner, { backgroundColor: '#EEE9FF' }]}>
+            <View style={[styles.banner, { backgroundColor: colors.surfaceAlt }]}>
               <Txt variant="heading">🙈 You're invisible right now</Txt>
               <Txt style={{ color: colors.inkSoft }}>Confess at least one problem and you'll show up in Discover.</Txt>
             </View>
@@ -222,7 +222,7 @@ export default function MyProblems() {
               <Txt variant="heading">The basics</Txt>
               {!showForm ? (
                 <Pressable onPress={() => setEditing(true)} hitSlop={12} style={styles.pencil} accessibilityRole="button" accessibilityLabel="Edit the basics">
-                  <Ionicons name="pencil" size={15} color={colors.violet} />
+                  <Ionicons name="pencil" size={15} color={colors.deep} />
                 </Pressable>
               ) : null}
             </View>
@@ -253,8 +253,8 @@ export default function MyProblems() {
                   onChangeText={setHeadline}
                   maxLength={LIMITS.headlineMax}
                 />
-                <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.violet} />
-                <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
+                <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.deep} />
+                <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.primary} />
                 <Button title="Save" variant="dark" onPress={save} loading={busy === 'save'} />
                 {ageLocked && profile ? (
                   <Button
@@ -315,7 +315,7 @@ function BasicsRow({ label, value, muted }: { label: string; value: string; mute
 
 const styles = StyleSheet.create({
   basicsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.violet, 0.12), alignItems: 'center', justifyContent: 'center' },
+  pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.deep, 0.12), alignItems: 'center', justifyContent: 'center' },
   basicsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   hero: { alignItems: 'center', paddingBottom: 28, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 20, marginBottom: 18 },
@@ -325,8 +325,8 @@ const styles = StyleSheet.create({
   photoWrap: { width: 120, height: 120 },
   photo: { flex: 1, borderRadius: 60, backgroundColor: colors.white, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
   photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 10 },
-  photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.pink, textAlign: 'center' },
-  photoBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.white, backgroundColor: colors.violet, alignItems: 'center', justifyContent: 'center' },
+  photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.primary, textAlign: 'center' },
+  photoBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.white, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center' },
   heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
   content: { padding: 16, gap: 12, marginTop: -8 },
   banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
