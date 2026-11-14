@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { Platform, type ColorValue } from 'react-native';
+import { type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts } from '@/lib/theme';
 
@@ -13,6 +14,8 @@ const icon =
   );
 
 export default function TabsLayout() {
+  // Leave room for the phone's own bar (Android back/home/recents buttons, or the iPhone home indicator).
+  const bottom = Math.max(useSafeAreaInsets().bottom, 10);
   return (
     <Tabs
       screenOptions={{
@@ -23,9 +26,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 88 : 68,
+          height: 58 + bottom,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingBottom: bottom,
           elevation: 12,
           shadowColor: '#7B3F2A',
           shadowOpacity: 0.08,
@@ -34,7 +37,7 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen name="index" options={{ title: 'Discover', tabBarIcon: icon('flame', 'flame-outline') }} />
       <Tabs.Screen name="matches" options={{ title: 'Matches', tabBarIcon: icon('chatbubbles', 'chatbubbles-outline') }} />
-      <Tabs.Screen name="me" options={{ title: 'My Problems', tabBarIcon: icon('happy', 'happy-outline') }} />
+      <Tabs.Screen name="me" options={{ title: 'Possibly Icks', tabBarIcon: icon('happy', 'happy-outline') }} />
     </Tabs>
   );
 }

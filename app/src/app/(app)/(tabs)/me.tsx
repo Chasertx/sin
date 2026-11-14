@@ -31,6 +31,8 @@ export default function MyProblems() {
   const [category, setCategory] = useState<FlawCategory>('Habits');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  // The basics show as a read-only summary; the pencil opens them for editing.
+  const [editing, setEditing] = useState(false);
 
   // editable basics
   const [name, setName] = useState('');
@@ -46,6 +48,7 @@ export default function MyProblems() {
     setHeadline(p.headline ?? '');
     setGender(p.gender);
     setInterestedIn(p.interestedIn);
+    if (p.age < 18) setEditing(true); // nothing saved yet: go straight to the form
   };
 
   useFocusEffect(
@@ -93,6 +96,7 @@ export default function MyProblems() {
       if (!ageNum) throw new ApiError('Pop your age in as a number.', 400);
       apply(await api.updateMe({ displayName: name.trim(), age: ageNum, gender, interestedIn, headline: headline.trim() || null }));
       finishOnboarding();
+      setEditing(false);
       Alert.alert('Saved ✨', 'Your problems are up to date.');
     });
 
@@ -121,6 +125,8 @@ export default function MyProblems() {
     ]);
 
   const flaws = profile?.flaws ?? [];
+  const ageLocked = !!profile && profile.age >= 18;
+  const showForm = editing || needsOnboarding || !ageLocked;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -131,7 +137,7 @@ export default function MyProblems() {
         {/* Header */}
         <LinearGradient colors={sunset} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
           <View style={styles.heroTop}>
-            <Text style={styles.heroTitle}>My Problems</Text>
+            <Text style={styles.heroTitle}>Possibly Icks</Text>
             <Pressable onPress={signOut} style={styles.logout} hitSlop={8} accessibilityRole="button" accessibilityLabel="Log out">
               <Ionicons name="log-out-outline" size={18} color={colors.white} />
               <Text style={styles.logoutText}>Log out</Text>
@@ -209,25 +215,64 @@ export default function MyProblems() {
 
           {/* Basics */}
           <Card style={{ gap: 14, marginTop: 8 }}>
-            <Txt variant="heading">The basics</Txt>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 2 }}>
-                <Field label="Name" value={name} onChangeText={setName} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Field label="Age" value={age} onChangeText={setAge} keyboardType="number-pad" maxLength={3} />
-              </View>
+            <View style={styles.basicsHead}>
+              <Txt variant="heading">The basics</Txt>
+              {!showForm ? (
+                <Pressable onPress={() => setEditing(true)} hitSlop={12} style={styles.pencil} accessibilityRole="button" accessibilityLabel="Edit the basics">
+                  <Ionicons name="pencil" size={15} color={colors.violet} />
+                </Pressable>
+              ) : null}
             </View>
-            <Field
-              label="Headline"
-              placeholder="The worst thing about you, in one line"
-              value={headline}
-              onChangeText={setHeadline}
-              maxLength={LIMITS.headlineMax}
-            />
-            <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.violet} />
-            <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
-            <Button title="Save" variant="dark" onPress={save} loading={busy === 'save'} />
+
+            {showForm ? (
+              <>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 2 }}>
+                    <Field label="Name" value={name} onChangeText={setName} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Field
+                      label="Age"
+                      value={age}
+                      onChangeText={setAge}
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      editable={!ageLocked}
+                      style={ageLocked ? { color: colors.muted } : undefined}
+                    />
+                  </View>
+                </View>
+                {ageLocked ? <Txt variant="caption">Your age is locked once it's set.</Txt> : null}
+                <Field
+                  label="Headline"
+                  placeholder="The worst thing about you, in one line"
+                  value={headline}
+                  onChangeText={setHeadline}
+                  maxLength={LIMITS.headlineMax}
+                />
+                <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.violet} />
+                <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
+                <Button title="Save" variant="dark" onPress={save} loading={busy === 'save'} />
+                {ageLocked && profile ? (
+                  <Button
+                    title="Cancel"
+                    variant="ghost"
+                    onPress={() => {
+                      apply(profile); // throw away unsaved edits
+                      setEditing(false);
+                    }}
+                  />
+                ) : null}
+              </>
+            ) : profile ? (
+              <View style={{ gap: 12 }}>
+                <BasicsRow label="Name" value={profile.displayName} />
+                <BasicsRow label="Age" value={String(profile.age)} />
+                <BasicsRow label="Headline" value={profile.headline ?? 'None yet'} muted={!profile.headline} />
+                <BasicsRow label="I am" value={genderLabel(profile.gender)} />
+                <BasicsRow label="Into" value={profile.interestedIn} />
+              </View>
+            ) : null}
           </Card>
 
           {/* Account */}
@@ -254,7 +299,21 @@ export default function MyProblems() {
   );
 }
 
+function BasicsRow({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+  return (
+    <View style={styles.basicsRow}>
+      <Txt variant="label" style={{ width: 92 }}>
+        {label}
+      </Txt>
+      <Txt style={[{ flex: 1 }, muted && { color: colors.muted }]}>{value}</Txt>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  basicsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.violet, 0.12), alignItems: 'center', justifyContent: 'center' },
+  basicsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   hero: { alignItems: 'center', paddingBottom: 28, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 20, marginBottom: 18 },
   heroTitle: { fontFamily: fonts.black, fontSize: 28, color: colors.white },

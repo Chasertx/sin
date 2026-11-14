@@ -147,7 +147,7 @@ describe('Register', () => {
     expect(mockedApi.register).not.toHaveBeenCalled();
   });
 
-  it('registers with the chosen options and goes to My Problems', async () => {
+  it('registers with the chosen options and goes to Possibly Icks', async () => {
     mockedApi.register.mockResolvedValue(authResponse);
     await render(<Register />);
     await fill();

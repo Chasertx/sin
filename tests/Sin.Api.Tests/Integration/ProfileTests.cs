@@ -24,16 +24,43 @@ public class ProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var u = await factory.CreateUserAsync();
         var updated = await (await u.Client.PutJsonAsync("/api/me",
-            new UpdateProfileRequest("  Renamed ", 33, Gender.Man, InterestedIn.Men, "  I clap when planes land. "))).ReadAsync<ProfileDto>();
+            new UpdateProfileRequest("  Renamed ", 30, Gender.Man, InterestedIn.Men, "  I clap when planes land. "))).ReadAsync<ProfileDto>();
 
         Assert.Equal("Renamed", updated.DisplayName);
-        Assert.Equal(33, updated.Age);
+        Assert.Equal(30, updated.Age);
         Assert.Equal(Gender.Man, updated.Gender);
         Assert.Equal(InterestedIn.Men, updated.InterestedIn);
         Assert.Equal("I clap when planes land.", updated.Headline);
 
         var reloaded = await (await u.Client.GetAsync("/api/me")).ReadAsync<ProfileDto>();
         Assert.Equal(updated, reloaded with { Flaws = updated.Flaws });
+    }
+
+    [Fact]
+    public async Task Age_cannot_be_changed_once_set()
+    {
+        var u = await factory.CreateUserAsync(age: 30);
+        var error = await (await u.Client.PutJsonAsync("/api/me", new UpdateProfileRequest("Ok", 31, Gender.Woman, InterestedIn.Everyone, null))).ErrorAsync();
+        Assert.Contains("can't be changed", error);
+        Assert.Equal(30, (await (await u.Client.GetAsync("/api/me")).ReadAsync<ProfileDto>()).Age);
+    }
+
+    [Fact]
+    public async Task Age_can_be_set_once_when_missing_then_locks()
+    {
+        // People who sign up with Google/Apple have no age until onboarding.
+        var u = await factory.CreateUserAsync();
+        await factory.WithDbAsync(async db =>
+        {
+            (await db.Users.FindAsync(u.Id))!.Age = 0;
+            await db.SaveChangesAsync();
+        });
+
+        var set = await (await u.Client.PutJsonAsync("/api/me", new UpdateProfileRequest("Ok", 25, Gender.Woman, InterestedIn.Everyone, null))).ReadAsync<ProfileDto>();
+        Assert.Equal(25, set.Age);
+
+        var error = await (await u.Client.PutJsonAsync("/api/me", new UpdateProfileRequest("Ok", 26, Gender.Woman, InterestedIn.Everyone, null))).ErrorAsync();
+        Assert.Contains("can't be changed", error);
     }
 
     [Fact]

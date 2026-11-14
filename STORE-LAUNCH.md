@@ -10,7 +10,7 @@ Everything in the code that the stores require is done. What's left needs your a
 | Terms accepted at sign-up, no tolerance for abuse | Sign-up screen links to the terms and privacy policy |
 | Filter objectionable content | Word filter on names, headlines, confessions and messages |
 | Report a user, block a user | Flag button on Discover; "..." menu in chat |
-| Delete account inside the app | My Problems → Account → Delete account |
+| Delete account inside the app | Possibly Icks → Account → Delete account |
 | Public privacy policy and terms | `/privacy.html` and `/terms.html` on the API |
 | Photos don't leak location | Every upload is re-encoded with hidden data removed |
 | App icon, splash screen, permissions text | `app/app.json`, `app/assets/images` |
@@ -115,7 +115,7 @@ Reviewers need a login. Create two accounts in the live app (so one can show the
 
 > Sign in with: `<review account email>` / `<password>`.
 > This is a dating app for adults with user-generated text and one optional photo.
-> Safety features: a word filter on all text; Report and Block from the flag button on the Discover screen and the "..." menu in chat; reports are reviewed within 24 hours and offending accounts are banned. Account deletion: My Problems tab → Account → Delete account.
+> Safety features: a word filter on all text; Report and Block from the flag button on the Discover screen and the "..." menu in chat; reports are reviewed within 24 hours and offending accounts are banned. Account deletion: Possibly Icks tab → Account → Delete account.
 
 Then submit:
 

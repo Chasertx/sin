@@ -39,7 +39,10 @@ it('loads and shows the profile', async () => {
   expect(await screen.findByText('Dana, 29')).toBeTruthy();
   expect(screen.getByText('Seven streaming subscriptions.')).toBeTruthy();
   expect(screen.getByText('1 of 12 confessed')).toBeTruthy();
-  expect(fieldAfterLabel('Headline').props.value).toBe('I read your texts aloud.');
+  // The basics are a read-only summary until the pencil is tapped.
+  expect(screen.getByText('I read your texts aloud.')).toBeTruthy();
+  expect(screen.getByLabelText('Edit the basics')).toBeTruthy();
+  expect(screen.queryByText('Save')).toBeNull();
 });
 
 it('confesses in the chosen category', async () => {
@@ -93,13 +96,13 @@ it('deletes a confession only after confirming', async () => {
   await waitFor(() => expect(screen.queryByText('Seven streaming subscriptions.')).toBeNull());
 });
 
-it('saves the basics', async () => {
-  mockedApi.updateMe.mockResolvedValue(profile({ displayName: 'Danielle', age: 30, interestedIn: 'Men' }));
+it('saves the basics after tapping the pencil, then goes back to the summary', async () => {
+  mockedApi.updateMe.mockResolvedValue(profile({ displayName: 'Danielle', interestedIn: 'Men', headline: null }));
   await render(<MyProblems />);
   await screen.findByText('Dana, 29');
 
+  await fireEvent.press(screen.getByLabelText('Edit the basics'));
   await fireEvent.changeText(fieldAfterLabel('Name'), ' Danielle ');
-  await fireEvent.changeText(fieldAfterLabel('Age'), '30');
   await fireEvent.changeText(fieldAfterLabel('Headline'), '   ');
   await fireEvent.press(screen.getByText('Men'));
   await fireEvent.press(screen.getByText('Save'));
@@ -107,18 +110,45 @@ it('saves the basics', async () => {
   await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Saved ✨', 'Your problems are up to date.'));
   expect(mockedApi.updateMe).toHaveBeenCalledWith({
     displayName: 'Danielle',
-    age: 30,
+    age: 29,
     gender: 'Woman',
     interestedIn: 'Men',
     headline: null,
   });
   expect(mockSession.finishOnboarding).toHaveBeenCalled();
-  expect(await screen.findByText('Danielle, 30')).toBeTruthy();
+  expect(await screen.findByText('Danielle, 29')).toBeTruthy();
+  // Back to the summary: the Save button is replaced by the small pencil.
+  expect(screen.queryByText('Save')).toBeNull();
+  expect(screen.getByLabelText('Edit the basics')).toBeTruthy();
+});
+
+it('locks the age once it is set', async () => {
+  await render(<MyProblems />);
+  await screen.findByText('Dana, 29');
+  await fireEvent.press(screen.getByLabelText('Edit the basics'));
+  expect(fieldAfterLabel('Age').props.editable).toBe(false);
+  expect(fieldAfterLabel('Age').props.value).toBe('29');
+  expect(screen.getByText("Your age is locked once it's set.")).toBeTruthy();
+});
+
+it('cancel throws away unsaved edits', async () => {
+  await render(<MyProblems />);
+  await screen.findByText('Dana, 29');
+  await fireEvent.press(screen.getByLabelText('Edit the basics'));
+  await fireEvent.changeText(fieldAfterLabel('Name'), 'Someone Else');
+  await fireEvent.press(screen.getByText('Cancel'));
+
+  expect(mockedApi.updateMe).not.toHaveBeenCalled();
+  expect(screen.queryByText('Save')).toBeNull();
+  await fireEvent.press(screen.getByLabelText('Edit the basics'));
+  expect(fieldAfterLabel('Name').props.value).toBe('Dana');
 });
 
 it('requires a numeric age before saving', async () => {
+  mockedApi.me.mockResolvedValue(profile({ age: 0 })); // age not set yet, so it can still be typed
   await render(<MyProblems />);
-  await screen.findByText('Dana, 29');
+  await screen.findByText('Dana');
+  expect(fieldAfterLabel('Age').props.editable).not.toBe(false);
   await fireEvent.changeText(fieldAfterLabel('Age'), '');
   await fireEvent.press(screen.getByText('Save'));
   await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Hmm', 'Pop your age in as a number.'));

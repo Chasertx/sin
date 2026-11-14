@@ -28,6 +28,8 @@ public static class ProfileEndpoints
             if (user is null) return Results.NotFound();
             if (string.IsNullOrWhiteSpace(r.DisplayName) || r.DisplayName.Length > 50) return Error("Display name is required (max 50).");
             if (r.Age < 18 || r.Age > 120) return Error("You must be 18 or older.");
+            // Age is set once (at sign-up, or during onboarding after Google/Apple sign-in) and then locked.
+            if (user.Age >= 18 && r.Age != user.Age) return Error("Your age can't be changed once it's set.");
             var headline = string.IsNullOrWhiteSpace(r.Headline) ? null : r.Headline.Trim();
             if (headline?.Length > Limits.HeadlineMaxLength) return Error($"Headline max {Limits.HeadlineMaxLength} characters.");
             if (filter.Check(r.DisplayName) is { } badName) return Error(badName);
