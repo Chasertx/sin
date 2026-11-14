@@ -21,7 +21,7 @@ Sign-in is email and password only for version 1. Google sign-in stays off: turn
 
 ## Step 1. Decisions and accounts (you)
 
-1. **Support email address.** Tell Claude the address and it goes into both legal pages, replacing the `[support email address]` placeholder. The stores reject a placeholder.
+1. **Support email address.** Both legal pages currently show `example@example.com`. That address cannot receive mail, so replace it with a real inbox before submitting to the stores.
 2. **Apple Developer Program**, $99 per year: https://developer.apple.com/programs/enroll/
 3. **Google Play Console**, $25 once: https://play.google.com/console/signup
    New personal accounts must run a closed test with 12 testers for 14 days before going public. Start this early.
