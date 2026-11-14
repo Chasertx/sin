@@ -36,8 +36,5 @@ services:
       # Moderation API (X-Admin-Key header). Render generates a random key; find it in the dashboard.
       - key: Admin__ApiKey
         generateValue: true
-      # Optional SSO (leave blank to hide the buttons)
-      - key: Sso__Google__ClientId
-        sync: false
-      - key: Sso__Google__ClientSecret
-        sync: false
+      # Google sign-in is off for version 1. To enable it later, add Sso__Google__ClientId and
+      # Sso__Google__ClientSecret in the Render dashboard (Environment tab).
