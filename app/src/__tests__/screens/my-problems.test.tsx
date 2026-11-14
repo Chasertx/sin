@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 import MyProblems from '@/app/(app)/(tabs)/me';
 import { api, ApiError } from '@/lib/api';
@@ -10,7 +10,7 @@ const mockSession = { signOut: jest.fn(), needsOnboarding: false, finishOnboardi
 jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
 jest.mock('@/lib/api', () => ({
   ...jest.requireActual('@/lib/api'),
-  api: { me: jest.fn(), addFlaw: jest.fn(), deleteFlaw: jest.fn(), updateMe: jest.fn(), uploadPhoto: jest.fn() },
+  api: { me: jest.fn(), addFlaw: jest.fn(), deleteFlaw: jest.fn(), updateMe: jest.fn(), uploadPhoto: jest.fn(), deleteAccount: jest.fn() },
 }));
 const mockedApi = api as jest.Mocked<typeof api>;
 
@@ -168,4 +168,56 @@ it('logs out', async () => {
   await render(<MyProblems />);
   await fireEvent.press(screen.getByLabelText('Log out'));
   expect(mockSession.signOut).toHaveBeenCalled();
+});
+
+describe('account', () => {
+  const confirmDelete = async () => {
+    await fireEvent.press(screen.getByLabelText('Delete account'));
+    const [title, message, buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1)!;
+    expect(title).toBe('Delete your account?');
+    expect(message).toMatch(/can't be undone/);
+    await act(async () => {
+      await buttons.find((b: { text: string }) => b.text === 'Delete forever').onPress();
+    });
+  };
+
+  beforeEach(() => {
+    mockSession.signOut.mockClear();
+    mockedApi.deleteAccount.mockReset();
+  });
+
+  it('deletes the account after confirmation and signs out', async () => {
+    mockedApi.deleteAccount.mockResolvedValue(undefined);
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await confirmDelete();
+    expect(mockedApi.deleteAccount).toHaveBeenCalled();
+    expect(mockSession.signOut).toHaveBeenCalled();
+  });
+
+  it('does not delete without confirmation', async () => {
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await fireEvent.press(screen.getByLabelText('Delete account'));
+    expect(mockedApi.deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it('stays signed in if deleting fails', async () => {
+    mockedApi.deleteAccount.mockRejectedValue(new ApiError('Something went wrong (500).', 500));
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await confirmDelete();
+    expect(mockSession.signOut).not.toHaveBeenCalled();
+    expect(Alert.alert).toHaveBeenLastCalledWith('Hmm', 'Something went wrong (500).');
+  });
+
+  it('links to the privacy policy and terms', async () => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await fireEvent.press(screen.getByText('Privacy policy'));
+    await fireEvent.press(screen.getByText('Terms & community rules'));
+    expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/privacy\.html$/));
+    expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/terms\.html$/));
+  });
 });

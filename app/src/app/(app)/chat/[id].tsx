@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SafetySheet } from '@/components/SafetySheet';
 import { Avatar, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -14,11 +15,12 @@ import { LIMITS, type Message } from '@/lib/types';
 const POLL_MS = 3000;
 
 export default function Chat() {
-  const { id, name = 'Match', photo } = useLocalSearchParams<{ id: string; name?: string; photo?: string }>();
+  const { id, name = 'Match', photo, userId } = useLocalSearchParams<{ id: string; name?: string; photo?: string; userId?: string }>();
   const insets = useSafeAreaInsets();
   const { session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const lastId = useRef(0);
   const list = useRef<FlatList<Message>>(null);
 
@@ -84,7 +86,7 @@ export default function Chat() {
         <Txt variant="heading" style={{ flex: 1 }}>
           {name}
         </Txt>
-        <Pressable onPress={unmatch} hitSlop={10} accessibilityRole="button" accessibilityLabel="Chat options">
+        <Pressable onPress={() => setMenuOpen(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Chat options">
           <Ionicons name="ellipsis-horizontal" size={22} color={colors.muted} />
         </Pressable>
       </View>
@@ -140,6 +142,27 @@ export default function Chat() {
           </LinearGradient>
         </Pressable>
       </View>
+
+      <SafetySheet
+        visible={menuOpen}
+        userId={userId}
+        name={name}
+        onClose={() => setMenuOpen(false)}
+        onRemoved={() => {
+          setMenuOpen(false);
+          router.back();
+        }}
+        extraActions={[
+          {
+            label: 'Unmatch',
+            icon: 'heart-dislike',
+            onPress: () => {
+              setMenuOpen(false);
+              unmatch();
+            },
+          },
+        ]}
+      />
     </KeyboardAvoidingView>
   );
 }

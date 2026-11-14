@@ -4,12 +4,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, CategoryTag, ChipGroup, Field, Txt } from '@/components/ui';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { categoryMeta, colors, fonts, radius, sunset, tint } from '@/lib/theme';
 import {
@@ -105,6 +105,20 @@ export default function MyProblems() {
       setProfile((p) => (p ? { ...p, photoUrl } : p));
     });
   };
+
+  const deleteAccount = () =>
+    Alert.alert('Delete your account?', "This permanently removes your profile, confessions, matches and messages. It can't be undone.", [
+      { text: 'Keep my account', style: 'cancel' },
+      {
+        text: 'Delete forever',
+        style: 'destructive',
+        onPress: () =>
+          run('delete', async () => {
+            await api.deleteAccount();
+            await signOut();
+          }),
+      },
+    ]);
 
   const flaws = profile?.flaws ?? [];
 
@@ -215,6 +229,25 @@ export default function MyProblems() {
             <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
             <Button title="Save" variant="dark" onPress={save} loading={busy === 'save'} />
           </Card>
+
+          {/* Account */}
+          <Card style={{ gap: 6, marginTop: 8 }}>
+            <Txt variant="heading">Account</Txt>
+            <Pressable onPress={() => Linking.openURL(PRIVACY_URL)} style={styles.link} accessibilityRole="link">
+              <Ionicons name="shield-checkmark-outline" size={18} color={colors.inkSoft} />
+              <Txt style={{ flex: 1 }}>Privacy policy</Txt>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+            <Pressable onPress={() => Linking.openURL(TERMS_URL)} style={styles.link} accessibilityRole="link">
+              <Ionicons name="document-text-outline" size={18} color={colors.inkSoft} />
+              <Txt style={{ flex: 1 }}>Terms & community rules</Txt>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+            <Pressable onPress={deleteAccount} style={styles.link} accessibilityRole="button" accessibilityLabel="Delete account">
+              <Ionicons name="trash-outline" size={18} color={colors.coral} />
+              <Txt style={{ flex: 1, color: colors.coral }}>{busy === 'delete' ? 'Deleting…' : 'Delete account'}</Txt>
+            </Pressable>
+          </Card>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -235,5 +268,6 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12, marginTop: -8 },
   banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
   flaw: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16 },
+  link: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   del: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
 });

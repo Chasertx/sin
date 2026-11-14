@@ -9,6 +9,7 @@ import type {
   Match,
   Message,
   Profile,
+  ReportReason,
   SwipeResult,
 } from './types';
 
@@ -27,6 +28,8 @@ function resolveApiUrl() {
 }
 
 export const API_URL = resolveApiUrl();
+export const PRIVACY_URL = `${API_URL}/privacy.html`;
+export const TERMS_URL = `${API_URL}/terms.html`;
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) {
@@ -115,4 +118,10 @@ export const api = {
     request<Message[]>('GET', `/api/matches/${matchId}/messages?after=${after}`),
   send: (matchId: string, text: string) => request<Message>('POST', `/api/matches/${matchId}/messages`, { text }),
   unmatch: (matchId: string) => request<void>('DELETE', `/api/matches/${matchId}`),
+
+  // safety
+  block: (userId: string) => request<void>('POST', `/api/users/${userId}/block`),
+  report: (userId: string, reason: ReportReason, details: string | null) =>
+    request<void>('POST', `/api/users/${userId}/report`, { reason, details }),
+  deleteAccount: () => request<void>('DELETE', '/api/me'),
 };

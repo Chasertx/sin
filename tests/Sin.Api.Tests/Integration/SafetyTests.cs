@@ -126,10 +126,5 @@ public class SafetyTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.True(await factory.WithDbAsync(db => db.Reports.AnyAsync(r => r.ReportedId == bad.Id)));
     }
 
-    private static MultipartFormDataContent PhotoContent()
-    {
-        var file = new ByteArrayContent([1, 2, 3]);
-        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
-        return new MultipartFormDataContent { { file, "file", "p.jpg" } };
-    }
+    private static MultipartFormDataContent PhotoContent() => TestHelpers.Photo("image/jpeg");
 }

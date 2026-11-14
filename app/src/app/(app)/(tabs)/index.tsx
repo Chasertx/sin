@@ -7,6 +7,7 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'rea
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SafetySheet } from '@/components/SafetySheet';
 import { PeekCard, SwipeCard, type SwipeCardHandle } from '@/components/SwipeCard';
 import { Avatar, Button, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
@@ -21,6 +22,7 @@ export default function Discover() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [match, setMatch] = useState<{ profile: Profile; matchId: string } | null>(null);
+  const [reporting, setReporting] = useState<Profile | null>(null);
   const cardRef = useRef<SwipeCardHandle>(null);
   const loadedFor = useRef<string | null>(null);
 
@@ -75,9 +77,16 @@ export default function Discover() {
           <Text style={styles.brand}>Get What Ya Get</Text>
           <Txt variant="caption">Swipe right if you can handle it</Txt>
         </View>
-        <Pressable onPress={refill} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Refresh">
-          <Ionicons name="refresh" size={20} color={colors.ink} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {top ? (
+            <Pressable onPress={() => setReporting(top)} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Report or block ${top.displayName}`}>
+              <Ionicons name="flag-outline" size={19} color={colors.ink} />
+            </Pressable>
+          ) : null}
+          <Pressable onPress={refill} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Refresh">
+            <Ionicons name="refresh" size={20} color={colors.ink} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.deck}>
@@ -107,6 +116,18 @@ export default function Discover() {
         </View>
       ) : null}
 
+      <SafetySheet
+        visible={!!reporting}
+        userId={reporting?.id}
+        name={reporting?.displayName ?? ''}
+        onClose={() => setReporting(null)}
+        onRemoved={() => {
+          const gone = reporting?.id;
+          setReporting(null);
+          setQueue((q) => q.filter((p) => p.id !== gone));
+        }}
+      />
+
       <MatchCelebration
         match={match}
         myName={session?.displayName ?? 'You'}
@@ -114,7 +135,7 @@ export default function Discover() {
         onChat={() => {
           const m = match;
           setMatch(null);
-          if (m) router.push({ pathname: '/chat/[id]', params: { id: m.matchId, name: m.profile.displayName } });
+          if (m) router.push({ pathname: '/chat/[id]', params: { id: m.matchId, name: m.profile.displayName, photo: m.profile.photoUrl ?? '', userId: m.profile.id } });
         }}
       />
     </View>

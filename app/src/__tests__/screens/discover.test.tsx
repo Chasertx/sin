@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 
@@ -8,7 +9,7 @@ import type { Profile } from '@/lib/types';
 
 const mockSession = { session: { token: 't', userId: 'me', displayName: 'Dana' } };
 jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
-jest.mock('@/lib/api', () => ({ ...jest.requireActual('@/lib/api'), api: { feed: jest.fn(), swipe: jest.fn() } }));
+jest.mock('@/lib/api', () => ({ ...jest.requireActual('@/lib/api'), api: { feed: jest.fn(), swipe: jest.fn(), block: jest.fn(), report: jest.fn() } }));
 const mockedApi = api as jest.Mocked<typeof api>;
 
 const person = (id: string, name: string): Profile => ({
@@ -62,7 +63,7 @@ it('celebrates a match and opens the chat', async () => {
   expect(Haptics.notificationAsync).toHaveBeenCalled();
 
   await fireEvent.press(screen.getByText('Say something brave'));
-  expect(router.push).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'match-1', name: 'Jess' } });
+  expect(router.push).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'match-1', name: 'Jess', photo: '', userId: 'a' } });
 });
 
 it('lets you dismiss the match and keep swiping', async () => {
@@ -116,4 +117,46 @@ it('ignores swipe failures and keeps going', async () => {
   await fireEvent.press(screen.getByLabelText('I can handle that'));
   expect(await screen.findByText('Leo argues with phone menus')).toBeTruthy();
   expect(screen.queryByText("It's a match!")).toBeNull();
+});
+
+it('reporting the person on top removes them from the deck', async () => {
+  mockedApi.feed.mockResolvedValue([person('a', 'Jess'), person('b', 'Leo'), person('c', 'Sam'), person('d', 'Tom')]);
+  mockedApi.report.mockResolvedValue(undefined);
+  await render(<Discover />);
+  await screen.findByText('Jess argues with phone menus');
+
+  await fireEvent.press(screen.getByLabelText('Report or block Jess'));
+  await fireEvent.press(screen.getByLabelText('Report Jess'));
+  await fireEvent.press(screen.getByText('Fake profile'));
+  await fireEvent.changeText(screen.getByPlaceholderText('Anything else we should know? (optional)'), '  stock photo  ');
+  await fireEvent.press(screen.getByText('Send report'));
+
+  await waitFor(() => expect(mockedApi.report).toHaveBeenCalledWith('a', 'FakeProfile', 'stock photo'));
+  expect(await screen.findByText('Leo argues with phone menus')).toBeTruthy();
+  expect(screen.queryByText('Jess argues with phone menus')).toBeNull();
+  expect(mockedApi.swipe).not.toHaveBeenCalled();
+});
+
+it('blocking the person on top removes them from the deck', async () => {
+  mockedApi.feed.mockResolvedValue([person('a', 'Jess'), person('b', 'Leo'), person('c', 'Sam'), person('d', 'Tom')]);
+  mockedApi.block.mockResolvedValue(undefined);
+  await render(<Discover />);
+  await screen.findByText('Jess argues with phone menus');
+
+  await fireEvent.press(screen.getByLabelText('Report or block Jess'));
+  await fireEvent.press(screen.getByLabelText('Block Jess'));
+  const [, , buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1)!;
+  await act(async () => {
+    await buttons.find((b: { text: string }) => b.text === 'Block').onPress();
+  });
+
+  expect(mockedApi.block).toHaveBeenCalledWith('a');
+  expect(await screen.findByText('Leo argues with phone menus')).toBeTruthy();
+});
+
+it('has nobody to report when the deck is empty', async () => {
+  mockedApi.feed.mockResolvedValue([]);
+  await render(<Discover />);
+  await screen.findByText("You've seen everyone's problems");
+  expect(screen.queryByLabelText(/Report or block/)).toBeNull();
 });

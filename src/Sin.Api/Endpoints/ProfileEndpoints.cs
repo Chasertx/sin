@@ -9,7 +9,7 @@ namespace Sin.Api.Endpoints;
 
 public static class ProfileEndpoints
 {
-    private static readonly string[] AllowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+    private static readonly string[] AllowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
     private const long MaxPhotoBytes = 8 * 1024 * 1024;
 
     public static void MapProfileEndpoints(this WebApplication app)
@@ -46,15 +46,18 @@ public static class ProfileEndpoints
         g.MapPost("/photo", async (IFormFile file, ClaimsPrincipal me, SinDb db, HttpRequest req, IPhotoStore photos) =>
         {
             if (file.Length == 0 || file.Length > MaxPhotoBytes) return Error("Photo must be under 8 MB.");
-            if (!AllowedImageTypes.Contains(file.ContentType)) return Error("Photo must be JPEG, PNG, WEBP or HEIC.");
+            if (!AllowedImageTypes.Contains(file.ContentType)) return Error("Photo must be JPEG, PNG or WEBP.");
 
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == me.UserId());
             if (user is null) return Results.NotFound();
 
-            var ext = file.ContentType.Split('/')[1].Replace("jpeg", "jpg");
-            var name = $"{user.Id:N}-{DateTime.UtcNow.Ticks}.{ext}";
-            await using (var stream = file.OpenReadStream())
-                await photos.SaveAsync(name, stream, file.ContentType);
+            // Re-encode rather than store the upload as-is: strips GPS/device data and rejects non-images.
+            await using var upload = file.OpenReadStream();
+            await using var clean = await PhotoProcessor.NormalizeAsync(upload);
+            if (clean is null) return Error("That file doesn't look like a photo we can read. Try a JPEG or PNG.");
+
+            var name = $"{user.Id:N}-{DateTime.UtcNow.Ticks}.jpg";
+            await photos.SaveAsync(name, clean, "image/jpeg");
 
             if (user.PhotoFile is not null)
                 await photos.DeleteAsync(user.PhotoFile);

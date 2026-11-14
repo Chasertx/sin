@@ -102,7 +102,7 @@ export default function Matches() {
 }
 
 function open(m: Match) {
-  router.push({ pathname: '/chat/[id]', params: { id: m.matchId, name: m.otherName, photo: m.otherPhotoUrl ?? '' } });
+  router.push({ pathname: '/chat/[id]', params: { id: m.matchId, name: m.otherName, photo: m.otherPhotoUrl ?? '', userId: m.otherUserId } });
 }
 
 const styles = StyleSheet.create({

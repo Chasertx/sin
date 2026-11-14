@@ -11,7 +11,7 @@ const mockSession = { session: { token: 't', userId: 'me', displayName: 'Dana' }
 jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
 jest.mock('@/lib/api', () => ({
   ...jest.requireActual('@/lib/api'),
-  api: { matches: jest.fn(), messages: jest.fn(), send: jest.fn(), unmatch: jest.fn() },
+  api: { matches: jest.fn(), messages: jest.fn(), send: jest.fn(), unmatch: jest.fn(), block: jest.fn(), report: jest.fn() },
 }));
 const mockedApi = api as jest.Mocked<typeof api>;
 
@@ -39,7 +39,7 @@ describe('Matches', () => {
     mockedApi.matches.mockResolvedValue([match('m2', 'Leo', 'hey')]);
     await render(<Matches />);
     await fireEvent.press(await screen.findByText('Leo'));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'm2', name: 'Leo', photo: '' } });
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'm2', name: 'Leo', photo: '', userId: 'm2-user' } });
   });
 
   it('shows an empty state', async () => {
@@ -60,7 +60,7 @@ describe('Chat', () => {
   const msg = (id: number, senderId: string, text: string): Message => ({ id, senderId, text, sentAt: '2026-11-13T17:04:00Z' });
 
   beforeEach(() => {
-    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'm1', name: 'Jess' });
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'm1', name: 'Jess', userId: 'jess-id' });
     mockedApi.messages.mockResolvedValue([msg(1, 'me', 'which fonts exactly'), msg(2, 'jess-id', 'Comic Sans. Unironically.')]);
   });
 
@@ -142,6 +142,7 @@ describe('Chat', () => {
     mockedApi.unmatch.mockResolvedValue(undefined);
     await render(<Chat />);
     await fireEvent.press(screen.getByLabelText('Chat options'));
+    await fireEvent.press(screen.getByLabelText('Unmatch'));
 
     const [title, , buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1)!;
     expect(title).toBe('Unmatch?');
@@ -150,6 +151,34 @@ describe('Chat', () => {
     });
 
     expect(mockedApi.unmatch).toHaveBeenCalledWith('m1');
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('blocks from the chat menu and leaves the conversation', async () => {
+    mockedApi.block.mockResolvedValue(undefined);
+    await render(<Chat />);
+    await fireEvent.press(screen.getByLabelText('Chat options'));
+    await fireEvent.press(screen.getByLabelText('Block Jess'));
+
+    const [title, , buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1)!;
+    expect(title).toBe('Block Jess?');
+    await act(async () => {
+      await buttons.find((b: { text: string }) => b.text === 'Block').onPress();
+    });
+
+    expect(mockedApi.block).toHaveBeenCalledWith('jess-id');
+    expect(router.back).toHaveBeenCalled();
+  });
+
+  it('reports from the chat menu and leaves the conversation', async () => {
+    mockedApi.report.mockResolvedValue(undefined);
+    await render(<Chat />);
+    await fireEvent.press(screen.getByLabelText('Chat options'));
+    await fireEvent.press(screen.getByLabelText('Report Jess'));
+    await fireEvent.press(screen.getByText('Harassment or threats'));
+    await fireEvent.press(screen.getByText('Send report'));
+
+    await waitFor(() => expect(mockedApi.report).toHaveBeenCalledWith('jess-id', 'Harassment', null));
     expect(router.back).toHaveBeenCalled();
   });
 

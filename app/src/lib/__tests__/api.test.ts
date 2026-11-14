@@ -139,6 +139,9 @@ describe('requests', () => {
     ['send', () => m.api.send('m1', 'hi'), 'POST', '/api/matches/m1/messages', { text: 'hi' }],
     ['messages', () => m.api.messages('m1', 42), 'GET', '/api/matches/m1/messages?after=42', undefined],
     ['unmatch', () => m.api.unmatch('m1'), 'DELETE', '/api/matches/m1', undefined],
+    ['block', () => m.api.block('u9'), 'POST', '/api/users/u9/block', undefined],
+    ['report', () => m.api.report('u9', 'Spam', 'crypto pitch'), 'POST', '/api/users/u9/report', { reason: 'Spam', details: 'crypto pitch' }],
+    ['deleteAccount', () => m.api.deleteAccount(), 'DELETE', '/api/me', undefined],
     ['updateMe', () => m.api.updateMe({ displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null }), 'PUT', '/api/me', { displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null }],
     ['register', () => m.api.register({ email: 'e', password: 'p', displayName: 'n', age: 20, gender: 'Man', interestedIn: 'Everyone' }), 'POST', '/api/auth/register', { email: 'e', password: 'p', displayName: 'n', age: 20, gender: 'Man', interestedIn: 'Everyone' }],
   ])('%s hits the right endpoint', async (_name, call, method, path, body) => {

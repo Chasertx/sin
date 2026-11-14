@@ -25,6 +25,18 @@ export const CATEGORIES: FlawCategory[] = [
   'Other',
 ];
 
+export type ReportReason = 'Harassment' | 'HateSpeech' | 'Spam' | 'FakeProfile' | 'Underage' | 'Inappropriate' | 'Other';
+
+export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
+  { value: 'Harassment', label: 'Harassment or threats' },
+  { value: 'HateSpeech', label: 'Hate speech' },
+  { value: 'Inappropriate', label: 'Inappropriate content' },
+  { value: 'FakeProfile', label: 'Fake profile' },
+  { value: 'Spam', label: 'Spam or scam' },
+  { value: 'Underage', label: 'Seems under 18' },
+  { value: 'Other', label: 'Something else' },
+];
+
 export const genderLabel = (g: Gender) => (g === 'NonBinary' ? 'Non-binary' : g);
 
 export interface AuthResponse {
@@ -77,4 +89,5 @@ export const LIMITS = {
   flawMax: 280,
   headlineMax: 140,
   messageMax: 1000,
+  reportDetailsMax: 1000,
 } as const;

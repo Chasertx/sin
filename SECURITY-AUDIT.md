@@ -49,6 +49,8 @@ After Google/Apple sign-in, the API redirects to `sin://auth#token=<30-day JWT>`
 Phone photos usually carry EXIF data: GPS coordinates, device model, timestamp. Photos are stored and served byte-for-byte, so a match could download a photo and find where someone lives. That's a serious safety risk for a dating app.
 **Fix:** re-encode every upload server-side (e.g. ImageSharp): strip all metadata, normalize orientation, cap dimensions (e.g. 1600px), and convert to JPEG/WebP. This also fixes #9.
 
+**Status: fixed (2026-11-14).** `PhotoProcessor` re-encodes every upload with Magick.NET (Apache 2.0): only JPEG/PNG/WebP are decoded, rotation is applied, photos are capped at 1600px, all metadata is stripped, and the result is stored as JPEG. Files that don't decode are rejected. Covered by tests in `ProfileTests`.
+
 ### 5. 🟠 Vulnerable SQLite native library
 `SQLitePCLRaw.lib.e_sqlite3 2.1.6` (pulled in by EF Core SQLite) has a High advisory. Production uses Postgres, but the library still ships in the server image.
 **Fix:** reference `SQLitePCLRaw.bundle_e_sqlite3` at a patched version, or drop SQLite from the production build.
@@ -67,6 +69,8 @@ The Dockerfile has no `USER`. A compromise of the app process gets root inside t
 
 ### 9. 🟡 Upload type trusted from the client
 Only the `Content-Type` header is checked. The file extension is derived from it, so this isn't an XSS vector today, but arbitrary bytes can be stored. **Fix:** covered by re-encoding in #4, or check magic bytes.
+
+**Status: fixed (2026-11-14)** by the re-encoding in #4.
 
 ### 10. 🟡 Host and proxy trust
 `AllowedHosts: "*"` lets any `Host` header through, and `ForwardedHeaders` trusts `X-Forwarded-*` from any source. Behind Render's proxy this is acceptable (the proxy sets the last hop), but if the API is ever exposed directly, a client could spoof its IP to dodge rate limits.

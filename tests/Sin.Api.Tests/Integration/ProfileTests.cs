@@ -130,14 +130,14 @@ public class ProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var u = await factory.CreateUserAsync();
 
-        var first = await (await u.Client.PostAsync("/api/me/photo", Image("image/jpeg", 100))).ReadAsync<PhotoUploadResponse>();
+        var first = await (await u.Client.PostAsync("/api/me/photo", TestHelpers.Photo("image/jpeg"))).ReadAsync<PhotoUploadResponse>();
         Assert.StartsWith("https://photos.test/", first.PhotoUrl);
         Assert.EndsWith(".jpg", first.PhotoUrl);
         var firstName = first.PhotoUrl.Split('/')[^1];
         Assert.True(factory.Photos.Files.ContainsKey(firstName));
 
-        var second = await (await u.Client.PostAsync("/api/me/photo", Image("image/png", 50))).ReadAsync<PhotoUploadResponse>();
-        Assert.EndsWith(".png", second.PhotoUrl);
+        var second = await (await u.Client.PostAsync("/api/me/photo", TestHelpers.Photo("image/png"))).ReadAsync<PhotoUploadResponse>();
+        Assert.EndsWith(".jpg", second.PhotoUrl); // everything is re-encoded as JPEG
         Assert.False(factory.Photos.Files.ContainsKey(firstName)); // old one cleaned up
 
         var me = await (await u.Client.GetAsync("/api/me")).ReadAsync<ProfileDto>();
@@ -147,12 +147,48 @@ public class ProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Theory]
     [InlineData("application/pdf", 100, "JPEG, PNG")]
     [InlineData("image/gif", 100, "JPEG, PNG")]
+    [InlineData("image/heic", 100, "JPEG, PNG")]
+    [InlineData("image/jpeg", 100, "doesn't look like a photo")] // claims to be a JPEG, isn't
     [InlineData("image/jpeg", 0, "8 MB")]
     [InlineData("image/jpeg", 8 * 1024 * 1024 + 1, "8 MB")]
     public async Task Photo_upload_validation(string contentType, int bytes, string expected)
     {
         var u = await factory.CreateUserAsync();
         Assert.Contains(expected, await (await u.Client.PostAsync("/api/me/photo", Image(contentType, bytes))).ErrorAsync());
+    }
+
+    [Fact]
+    public async Task Photo_upload_strips_location_and_other_hidden_data()
+    {
+        var u = await factory.CreateUserAsync();
+        var res = await (await u.Client.PostAsync("/api/me/photo", TestHelpers.Photo("image/jpeg", withGps: true))).ReadAsync<PhotoUploadResponse>();
+
+        using var stored = new ImageMagick.MagickImage(factory.Photos.Files[res.PhotoUrl.Split('/')[^1]]);
+        Assert.Equal(ImageMagick.MagickFormat.Jpeg, stored.Format);
+        Assert.Null(stored.GetExifProfile());
+        Assert.Null(stored.GetXmpProfile());
+        Assert.Null(stored.GetIptcProfile());
+    }
+
+    [Fact]
+    public async Task Photo_upload_applies_rotation_and_shrinks_huge_photos()
+    {
+        var u = await factory.CreateUserAsync();
+        // 4000x1000 stored sideways (EXIF orientation 6 = rotate 90).
+        var res = await (await u.Client.PostAsync("/api/me/photo", TestHelpers.Photo("image/jpeg", 4000, 1000, orientation: 6))).ReadAsync<PhotoUploadResponse>();
+
+        using var stored = new ImageMagick.MagickImage(factory.Photos.Files[res.PhotoUrl.Split('/')[^1]]);
+        Assert.Equal(400u, stored.Width);
+        Assert.Equal(1600u, stored.Height);
+    }
+
+    [Fact]
+    public async Task Small_photos_are_not_enlarged()
+    {
+        var u = await factory.CreateUserAsync();
+        var res = await (await u.Client.PostAsync("/api/me/photo", TestHelpers.Photo("image/webp", 64, 48))).ReadAsync<PhotoUploadResponse>();
+        using var stored = new ImageMagick.MagickImage(factory.Photos.Files[res.PhotoUrl.Split('/')[^1]]);
+        Assert.Equal((64u, 48u), (stored.Width, stored.Height));
     }
 
     private static MultipartFormDataContent Image(string contentType, int bytes)

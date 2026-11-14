@@ -19,6 +19,35 @@ public static class TestHelpers
 
     public static string UniqueEmail(string prefix = "user") => $"{prefix}-{Guid.NewGuid():N}@test.app";
 
+    /// <summary>A real, decodable image upload (optionally carrying GPS data or a sideways-rotation flag).</summary>
+    public static MultipartFormDataContent Photo(string contentType, int width = 32, int height = 24, bool withGps = false, ushort? orientation = null)
+    {
+        using var image = new ImageMagick.MagickImage(ImageMagick.MagickColors.CornflowerBlue, (uint)width, (uint)height);
+        if (withGps || orientation is not null)
+        {
+            var exif = new ImageMagick.ExifProfile();
+            if (withGps)
+            {
+                exif.SetValue(ImageMagick.ExifTag.GPSLatitudeRef, "N");
+                exif.SetValue(ImageMagick.ExifTag.GPSLatitude,
+                    [new ImageMagick.Rational(40, 1), new ImageMagick.Rational(42, 1), new ImageMagick.Rational(46, 1)]);
+                exif.SetValue(ImageMagick.ExifTag.Make, "TestPhone");
+            }
+            if (orientation is { } o) exif.SetValue(ImageMagick.ExifTag.Orientation, o);
+            image.SetProfile(exif);
+            if (orientation is { } tag) image.Orientation = (ImageMagick.Orientation)tag;
+        }
+        image.Format = contentType switch
+        {
+            "image/png" => ImageMagick.MagickFormat.Png,
+            "image/webp" => ImageMagick.MagickFormat.WebP,
+            _ => ImageMagick.MagickFormat.Jpeg,
+        };
+        var file = new ByteArrayContent(image.ToByteArray());
+        file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        return new MultipartFormDataContent { { file, "file", "photo" } };
+    }
+
     /// <summary>Registers a user through the API and returns a client that's signed in as them.</summary>
     public static async Task<TestUser> CreateUserAsync(
         this ApiFactory factory,
