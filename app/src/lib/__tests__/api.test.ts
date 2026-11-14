@@ -127,9 +127,13 @@ describe('requests', () => {
 
   it('uploads photos as multipart without forcing a content type', async () => {
     fetchMock.mockReturnValueOnce(respond(200, { photoUrl: 'https://x/p.jpg' }));
-    const res = await m.api.uploadPhoto('file:///p.jpg', 'image/jpeg', 'p.jpg');
+    const res = await m.api.uploadPhoto('file:///p.jpg');
     const { init } = lastCall();
     expect(init.body).toBeInstanceOf(FormData);
+    // The form must carry a real file object: Expo's fetch rejects the old { uri, name, type } shape.
+    const part = (init.body as FormData).get('file');
+    expect(part).toBeInstanceOf(Blob);
+    expect((part as Blob).size).toBeGreaterThan(0);
     expect(init.headers['Content-Type']).toBeUndefined(); // fetch sets the multipart boundary itself
     expect(res.photoUrl).toBe('https://x/p.jpg');
   });

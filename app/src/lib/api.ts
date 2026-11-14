@@ -1,4 +1,6 @@
 import Constants from 'expo-constants';
+import { File } from 'expo-file-system';
+import { Platform } from 'react-native';
 
 import type {
   AuthResponse,
@@ -60,7 +62,8 @@ async function request<T>(method: string, path: string, body?: unknown, isForm =
       headers,
       body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
     });
-  } catch {
+  } catch (e) {
+    if (__DEV__) console.warn(`${method} ${path} failed before a response:`, e);
     throw new ApiError(__DEV__ ? `Can't reach the server at ${API_URL}. Is the API running?` : "Can't connect right now. Check your internet and try again.", 0);
   }
 
@@ -100,10 +103,14 @@ export const api = {
     request<Profile>('PUT', '/api/me', p),
   addFlaw: (category: FlawCategory, text: string) => request<Flaw>('POST', '/api/me/flaws', { category, text }),
   deleteFlaw: (id: string) => request<void>('DELETE', `/api/me/flaws/${id}`),
-  uploadPhoto: (uri: string, mimeType: string, fileName: string) => {
+  /**
+   * @param uri     the picked image (a file:// path on phones)
+   * @param webFile the browser File object, which the picker only provides on web
+   */
+  uploadPhoto: (uri: string, webFile?: Blob | null) => {
     const form = new FormData();
-    // React Native's FormData accepts { uri, name, type } for files.
-    form.append('file', { uri, name: fileName, type: mimeType } as unknown as Blob);
+    // Expo's fetch only accepts real file objects in a form, not React Native's old { uri, name, type } shape.
+    form.append('file', Platform.OS === 'web' && webFile ? webFile : (new File(uri) as unknown as Blob));
     return request<{ photoUrl: string }>('POST', '/api/me/photo', form, true);
   },
 

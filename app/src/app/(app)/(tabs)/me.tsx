@@ -101,7 +101,7 @@ export default function MyProblems() {
     if (res.canceled) return;
     const a = res.assets[0];
     await run('photo', async () => {
-      const { photoUrl } = await api.uploadPhoto(a.uri, a.mimeType ?? 'image/jpeg', a.fileName ?? 'photo.jpg');
+      const { photoUrl } = await api.uploadPhoto(a.uri, a.file);
       setProfile((p) => (p ? { ...p, photoUrl } : p));
     });
   };

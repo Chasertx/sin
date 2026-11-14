@@ -74,6 +74,17 @@ jest.mock('expo-web-browser', () => ({
 
 jest.mock('expo-linking', () => ({ createURL: jest.fn((path: string) => `exp://127.0.0.1:8081/--/${path}`) }));
 
+// Files: a Blob that remembers where it came from, like expo-file-system's File.
+jest.mock('expo-file-system', () => ({
+  File: class extends Blob {
+    uri: string;
+    constructor(uri: string) {
+      super(['fake image bytes'], { type: 'image/jpeg' });
+      this.uri = uri;
+    }
+  },
+}));
+
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
 }));

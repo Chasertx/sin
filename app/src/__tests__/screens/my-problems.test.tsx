@@ -150,7 +150,7 @@ it('uploads a picked photo', async () => {
 
   await fireEvent.press(screen.getByLabelText('Change photo'));
 
-  await waitFor(() => expect(mockedApi.uploadPhoto).toHaveBeenCalledWith('file:///me.jpg', 'image/jpeg', 'me.jpg'));
+  await waitFor(() => expect(mockedApi.uploadPhoto).toHaveBeenCalledWith('file:///me.jpg', undefined));
   expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledWith(expect.objectContaining({ mediaTypes: ['images'], allowsEditing: true }));
   expect(await screen.findByTestId('expo-image')).toBeTruthy();
 });
