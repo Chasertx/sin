@@ -29,7 +29,7 @@ services:
       - key: Supabase__ServiceKey
         sync: false
       - key: Supabase__Bucket
-        value: photos
+        value: ick
       # Demo users are for local development only.
       - key: Demo__SeedUsers
         value: "false"
