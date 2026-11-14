@@ -14,7 +14,9 @@ public static class NegativityGuard
         "good listener", "love to travel", "love traveling", "wanderlust", "work hard play hard",
         "entrepreneur", "six pack", "6 pack", "perfectionist", "i care too much", "too nice",
         "too honest", "work too hard", "fluent in", "own my own", "own a house", "6 ft", "six foot",
-        "gym rat", "fitness model", "high value", "alpha male"
+        "gym rat", "fitness model", "high value", "alpha male", "i'm perfect", "i am perfect",
+        "basically perfect", "everyone loves me", "i'm the best", "i am the best", "i'm great at", "i am great at",
+        "i'm beautiful", "i'm gorgeous", "i'm handsome", "i'm rich", "no flaws", "flawless"
     ];
 
     /// <returns>An error message if the text is too positive, otherwise null.</returns>

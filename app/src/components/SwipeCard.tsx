@@ -134,13 +134,18 @@ function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
         <View style={styles.nameRow}>
           <Text style={styles.name}>{profile.displayName}</Text>
           <Text style={styles.age}>{profile.age}</Text>
+          {extra > 0 ? (
+            <View style={styles.more}>
+              <Text style={styles.moreText}>+ {extra} more confession{extra > 1 ? 's' : ''}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
       <View style={styles.body}>
         {profile.headline ? (
           <View style={styles.headline}>
-            <Txt style={styles.headlineText}>“{profile.headline}”</Txt>
+            <Txt style={styles.headlineText} numberOfLines={2}>“{profile.headline}”</Txt>
           </View>
         ) : null}
 
@@ -152,7 +157,6 @@ function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
             </Txt>
           </View>
         ))}
-        {extra > 0 ? <Txt variant="caption">+ {extra} more confession{extra > 1 ? 's' : ''}</Txt> : null}
       </View>
     </>
   );
@@ -172,8 +176,10 @@ const styles = StyleSheet.create({
   noPhotoCaption: { fontFamily: fonts.bold, fontSize: 13, color: tint(colors.white, 0.9) },
   photoShade: { ...StyleSheet.absoluteFill, top: '45%' },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, padding: 20 },
-  name: { fontFamily: fonts.black, fontSize: 34, color: colors.white },
+  name: { fontFamily: fonts.black, fontSize: 34, color: colors.white, flexShrink: 1 },
   age: { fontFamily: fonts.bold, fontSize: 24, color: tint(colors.white, 0.85) },
+  more: { marginLeft: 'auto', alignSelf: 'center', backgroundColor: tint(colors.white, 0.22), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
+  moreText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.white },
   body: { flex: 1, padding: 18, gap: 10 },
   headline: { backgroundColor: tint(colors.sunshine, 0.18), borderRadius: radius.md, padding: 12 },
   headlineText: { fontFamily: fonts.heavy, fontSize: 16, color: '#8A5A00' },

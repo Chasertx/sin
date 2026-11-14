@@ -12,6 +12,8 @@ public class NegativityGuardTests
     [InlineData("I’m a catch")] // curly apostrophe
     [InlineData("Serial entrepreneur, sorry")]
     [InlineData("I'm 6 ft and fluent in French")]
+    [InlineData("I'm basically perfect and everyone loves me.")]
+    [InlineData("Honestly I have no flaws")]
     public void Rejects_humblebrags(string text)
     {
         var error = NegativityGuard.Check(text);
@@ -23,6 +25,8 @@ public class NegativityGuardTests
     [InlineData("I eat cereal for dinner five nights a week")]
     [InlineData("I hold grudges against restaurants")]
     [InlineData("My car is a second closet")]
+    [InlineData("I'm far from perfect and it shows")]
+    [InlineData("I'm greatly overdue on my taxes")]
     public void Allows_genuine_flaws(string text) => Assert.Null(NegativityGuard.Check(text));
 
     [Theory]
