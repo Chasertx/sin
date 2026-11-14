@@ -14,13 +14,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://get-what-ya-get-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://get-what-ya-get-api-3dtp.onrender.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://get-what-ya-get-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://get-what-ya-get-api-3dtp.onrender.com"
       }
     }
   },

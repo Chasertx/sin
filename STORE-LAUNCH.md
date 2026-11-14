@@ -32,7 +32,7 @@ Sign-in is email and password only for version 1. Google sign-in stays off: turn
 1. Create the production Supabase project, `get-what-ya-get-prod`, with a **public** storage bucket named `photos`.
 2. In Render: New → Blueprint → pick the `sin` repo. It reads `render.yaml` and asks for three secrets: the session-pooler connection string, the Supabase URL, and the service key.
 3. Open `https://<your-service>.onrender.com/health`. It should say `{"status":"ok"}`.
-4. If the address is not `https://get-what-ya-get-api.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
+4. If the address is not `https://get-what-ya-get-api-3dtp.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
 
 Render's free plan puts the API to sleep after 15 minutes idle, and waking takes up to a minute. A store reviewer who hits that sees an app that won't load. Use the $7 per month plan (or your Azure hosting) before submitting for review.
 
