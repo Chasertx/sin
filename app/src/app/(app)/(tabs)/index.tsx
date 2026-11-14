@@ -74,7 +74,7 @@ export default function Discover() {
     <View style={[styles.screen, { paddingTop: insets.top + 8 }]}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.brand}>Get What Ya Get</Text>
+          <Text style={styles.brand}>Ick</Text>
           <Txt variant="caption">Swipe right if you can handle it</Txt>
         </View>
         <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -211,7 +211,7 @@ function MatchCelebration({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 },
-  brand: { fontFamily: fonts.black, fontSize: 26, color: colors.pink, letterSpacing: -0.5 },
+  brand: { fontFamily: fonts.black, fontSize: 32, color: colors.pink, letterSpacing: -0.5 },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
   deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },

@@ -1,4 +1,4 @@
-# Security Audit: Get What Ya Get
+# Security Audit: Ick
 
 **Date:** 2026-11-13 · **Scope:** .NET 8 API (`src/Sin.Api`), Expo app (`app/`), hosting config (Docker, Render, Supabase), dependencies, git history.
 **Method:** manual code review of every endpoint and auth path, automated dependency scans (`dotnet list package --vulnerable`, `npm audit`), secret scan of the full git history, and the 269 automated tests (148 API + 121 app).

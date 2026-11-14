@@ -77,7 +77,7 @@ export default function Welcome() {
           <View style={styles.logo}>
             <Text style={{ fontSize: 44 }}>🤷</Text>
           </View>
-          <Text style={styles.brand}>Get What{'\n'}Ya Get</Text>
+          <Text style={styles.brand}>Ick</Text>
           <Text style={styles.tagline}>What can you handle?</Text>
           <Text style={styles.pitch}>Everyone's got problems. Here you lead with them.</Text>
         </View>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     transform: [{ rotate: '-8deg' }],
   },
-  brand: { fontFamily: fonts.black, fontSize: 48, lineHeight: 50, color: colors.white, textAlign: 'center', letterSpacing: -1 },
+  brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, textAlign: 'center', letterSpacing: -2 },
   tagline: { fontFamily: fonts.black, fontSize: 22, color: '#FFE7A3', marginTop: 10 },
   pitch: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9), marginTop: 6, textAlign: 'center' },
   sheet: { gap: 12, borderRadius: radius.xl, padding: 20 },

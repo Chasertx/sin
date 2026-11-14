@@ -1,4 +1,4 @@
-# Launching Get What Ya Get on the App Store and Google Play
+# Launching Ick on the App Store and Google Play
 
 Everything in the code that the stores require is done. What's left needs your accounts, your payment, or a decision from you. Work through the steps in order.
 
@@ -56,7 +56,7 @@ EAS asks to create the signing keys for you. Say yes to both.
 
 ## Step 4. Create the store listings
 
-**Name:** Get What Ya Get
+**Name:** Ick
 
 **Subtitle (Apple, 30 characters):** Dating that leads with flaws
 
@@ -66,16 +66,16 @@ EAS asks to create the signing keys for you. Say yes to both.
 
 > Every dating profile is a highlight reel. This one is the blooper reel.
 >
-> On Get What Ya Get, you can't brag. You confess: the snoring, the seven streaming subscriptions, the grudge against a restaurant from 2019. Then you swipe on other people's confessions and decide what you can live with.
+> On Ick, you can't brag. You confess: the snoring, the seven streaming subscriptions, the grudge against a restaurant from 2019. Then you swipe on other people's confessions and decide what you can live with.
 >
 > • Confess your real flaws. Humblebrags like "I'm a perfectionist" get bounced.
 > • Swipe "I can handle that" or "Too much."
 > • Match when you both say you can handle each other.
 > • Chat with people who already know the worst.
 >
-> No surprises three months in. You get what you get.
+> Find out what gives you the ick before the third date, not three months in.
 >
-> Get What Ya Get is for adults 18 and over. Be honest about yourself, never cruel about anyone else: harassment and hate get accounts removed.
+> Ick is for adults 18 and over. Be honest about yourself, never cruel about anyone else: harassment and hate get accounts removed.
 
 **Category:** Lifestyle (Apple: Lifestyle, secondary Social Networking). Google: Dating.
 

@@ -1,4 +1,4 @@
-# Get What Ya Get
+# Ick
 
 The anti-dating app: you can only post your flaws, and people swipe on what they can handle. "What can you handle?"
 

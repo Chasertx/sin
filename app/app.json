@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Get What Ya Get",
-    "slug": "get-what-ya-get",
+    "name": "Ick",
+    "slug": "ick",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "sin",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.getwhatyaget.app",
+      "bundleIdentifier": "com.ickdating.app",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
@@ -22,7 +22,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.getwhatyaget.app",
+      "package": "com.ickdating.app",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA"
@@ -46,7 +46,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Get What Ya Get uses your photo library so you can choose a profile photo.",
+          "photosPermission": "Ick uses your photo library so you can choose a profile photo.",
           "cameraPermission": false,
           "microphonePermission": false
         }

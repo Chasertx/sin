@@ -32,7 +32,7 @@ it('shows the first person in the feed with a peek of the next', async () => {
   await render(<Discover />);
   expect(await screen.findByText('Jess argues with phone menus')).toBeTruthy();
   expect(screen.getByText('Leo')).toBeTruthy(); // peek card
-  expect(screen.getByText('Get What Ya Get')).toBeTruthy();
+  expect(screen.getByText('Ick')).toBeTruthy();
 });
 
 it.each([
