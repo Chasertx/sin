@@ -1,135 +1,50 @@
-# Sin — the anti-Tinder
+# Get What Ya Get
 
-Swipe on people based **only on their flaws**. No flexing, no best angles, no "I love to travel."
-Profiles are a list of confessions (bad habits, baggage, money problems, temper, quirks, dealbreakers),
-an optional *least flattering* photo, and a one-line headline about the worst thing about you.
-Swipe **"I can live with that"** or **"Dealbreaker"**. Mutual "live with it" = match = chat.
+The anti-dating app: you can only post your flaws, and people swipe on what they can handle. "What can you handle?"
 
-A server-side **negativity guard** rejects humblebrags ("I'm a perfectionist", "I care too much", "6 ft"...).
+| Part | Tech | Folder |
+| --- | --- | --- |
+| API | ASP.NET Core 8 minimal API, EF Core (SQLite locally, Postgres on Supabase when hosted) | `src/Sin.Api` |
+| Shared contracts | DTOs, enums, limits | `src/Sin.Shared` |
+| Mobile app (iOS + Android) | Expo SDK 58, React Native, expo-router | `app` |
+| API tests | xUnit, in-process integration tests | `tests/Sin.Api.Tests` |
 
-## Stack
+## Run it locally
 
-| Piece | Tech |
-|---|---|
-| Mobile (iOS + Android) | .NET MAUI 8, MVVM (CommunityToolkit.Mvvm) |
-| API | ASP.NET Core 8 Minimal API, JWT auth, Swagger |
-| Database | EF Core 8 + **SQLite** (a single `sin.db` file, created and seeded automatically) |
-| Shared contracts | `Sin.Shared` class library used by both API and app |
+Needs Docker Desktop and Node.
 
 ```
-src/
-  Sin.Shared/   DTOs, enums, limits (shared by API + app)
-  Sin.Api/      Minimal API: auth, profile/flaws, feed, swipes, matches, chat
-  Sin.Mobile/   MAUI app: Login, Register, Feed (swipe cards), Matches, Chat, My Sins
+docker compose up -d --build      # API on http://localhost:5080
+cd app
+npm install
+npx expo start                    # then press a for Android, or scan the QR code with Expo Go
 ```
 
-## 1. Run the API (no database setup needed)
+With no `.env` file the API uses a local SQLite file and seeds demo users (password `password123`). To use Supabase instead, copy `.env.example` to `.env` and fill it in.
 
-**Option A: Docker (recommended).** From the repo root:
+The app finds the API on your PC automatically in development. To point it somewhere else, set `EXPO_PUBLIC_API_URL` in `app/.env.local`.
 
-```powershell
-docker compose up --build -d
+## Tests
+
+```
+./run-api-tests.sh                # API suite, runs in a .NET SDK container
+cd app && npx tsc --noEmit && npx jest
 ```
 
-Data (SQLite DB + photos) lives in Docker volumes, so it survives restarts.
-Reset everything with `docker compose down -v`.
+GitHub Actions runs both on every push (`.github/workflows/ci.yml`). Render deploys the API only after CI passes.
 
-**Option B: directly with .NET.**
+## How it works
 
-```powershell
-cd src/Sin.Api
-dotnet run
-```
+- **Auth:** email and password (BCrypt, JWT bearer tokens stored in the device keychain), login throttling and lockout. Google and Apple sign-in exist in the API but stay off until their credentials are configured.
+- **No bragging:** `NegativityGuard` bounces humblebrags; `ContentFilter` blocks abusive text (word list in `moderation-terms.txt`).
+- **Feed:** people you haven't swiped on, matched by gender preference, with at least one confession, excluding blocked and banned accounts.
+- **Matches and chat:** a match needs both people to swipe "I can handle that". Chat polls every few seconds.
+- **Safety:** block, report, delete account, admin moderation endpoints (`X-Admin-Key`).
+- **Photos:** re-encoded to JPEG on upload with location and other metadata removed; stored in Supabase Storage when configured, otherwise on local disk.
+- **Database:** on Postgres the tables live in a private `app` schema, so Supabase's public Data API cannot reach them.
 
-> If Windows says *"An Application Control policy has blocked this file"*, that's Smart App Control
-> blocking the freshly built, unsigned DLL. Use Docker (Option A) instead.
+## Deploying
 
-- Swagger UI: http://localhost:5080/swagger
-- First run creates `sin.db` and seeds 8 demo users (password `password123`, e.g. `dana@demo.sin`).
-- In Development, demo users **always like you back** so you can test matches and chat alone
-  (`Demo:SeedUsersAlwaysLikeBack` in `appsettings.Development.json`).
-- Reset everything: stop the API and delete `src/Sin.Api/sin.db`.
-
-## 2. Run the app
-
-One-time setup:
-
-```powershell
-dotnet workload install maui-android maui-ios   # run from an elevated (admin) terminal
-```
-
-**Android (works on Windows):** the Android SDK is already at `%LOCALAPPDATA%\Android\Sdk` on this machine
-(installed with `dotnet build -t:InstallAndroidDependencies -f net8.0-android -p:AcceptAndroidSDKLicenses=True`).
-For an emulator, install Android Studio → Device Manager → create a Pixel device. Or plug in a phone with
-USB debugging on. Then:
-
-```powershell
-cd src/Sin.Mobile
-dotnet build -t:Run -f net8.0-android
-```
-
-**iOS:** Apple requires a Mac with Xcode to build. Either build on a Mac
-(`dotnet build -t:Run -f net8.0-ios`) or pair Visual Studio on Windows with a Mac on your network.
-
-### Pointing the app at the API
-
-`src/Sin.Mobile/AppConfig.cs` uses `http://localhost:5080/` everywhere:
-- **Android emulator or USB phone:** run `adb reverse tcp:5080 tcp:5080` once after it connects.
-- **iOS simulator:** works as-is.
-- **Phone over Wi-Fi / production:** set `Override` to your server's address (https in production).
-
-## SSO: Sign in with Google / Apple
-
-How it works (the standard MAUI `WebAuthenticator` pattern, the same on iOS and Android):
-
-1. App opens the system browser at `GET /api/auth/sso/{Google|Apple}`.
-2. The API sends you to Google/Apple; they redirect back to `/signin-google` or `/signin-apple`.
-3. The API finds or creates the user (linking by verified email to any existing account), issues
-   the usual Sin JWT, and redirects to `sin://auth#token=...`, which the OS hands back to the app.
-4. New SSO users land on **My Sins** to add age/preferences and a first confession. They're hidden
-   from the feed until they do.
-
-Buttons only appear for providers the server has credentials for (`GET /api/auth/providers`).
-
-**Setup:** copy `.env.example` to `.env`, fill in the values (instructions are in the file), then
-`docker compose up -d --build`.
-
-- **Google** works locally: add `http://localhost:5080/signin-google` as an authorized redirect URI.
-  The app talks to `localhost` on Android too, so run `adb reverse tcp:5080 tcp:5080` after the
-  emulator/phone connects.
-- **Apple** requires https on a real domain, so test it after you deploy (or through a tunnel like
-  `ngrok http 5080` / VS Dev Tunnels, using that URL as the return URL and in `AppConfig.Override`).
-- App Store rule: if an iOS app offers Google sign-in it must also offer Sign in with Apple.
-
-## API overview
-
-| Method | Route | What |
-|---|---|---|
-| POST | `/api/auth/register`, `/api/auth/login` | Returns a JWT |
-| GET | `/api/auth/providers`, `/api/auth/sso/{provider}` | SSO (see above) |
-| GET/PUT | `/api/me` | My profile |
-| POST | `/api/me/photo` | Upload least flattering photo (multipart `file`) |
-| POST/DELETE | `/api/me/flaws`, `/api/me/flaws/{id}` | Confess / retract |
-| GET | `/api/feed` | Unswiped profiles matching mutual gender preferences |
-| POST | `/api/swipes` | `{ targetUserId, canLiveWithIt }` → `{ isMatch, matchId }` |
-| GET | `/api/matches` | My matches + last message |
-| GET/POST | `/api/matches/{id}/messages?after={lastId}` | Chat (app polls every 3s) |
-| DELETE | `/api/matches/{id}` | Unmatch |
-
-## Moving to a "real" database later
-
-SQLite is fine for development and small deployments. For production:
-
-1. `dotnet add src/Sin.Api package Npgsql.EntityFrameworkCore.PostgreSQL --version 8.*`
-2. In `Program.cs` change `UseSqlite(...)` → `UseNpgsql(...)` and update the connection string.
-3. Replace `EnsureCreated()` with EF migrations (`dotnet tool install -g dotnet-ef`, then
-   `dotnet ef migrations add Initial`) so schema changes don't require wiping data.
-
-## Before going to production
-
-- Change `Jwt:Key` (use an environment variable / secret store, not appsettings).
-- Serve the API over HTTPS and remove `usesCleartextTraffic` (Android) and `NSAllowsArbitraryLoads` (iOS).
-- Move photo storage from `wwwroot/uploads` to blob storage (Azure Blob / S3).
-- Add report/block, rate limiting, and real moderation (the negativity guard is a keyword list).
-- Swap chat polling for SignalR, and add push notifications for matches/messages.
-- App Store / Play Store dating apps need a privacy policy, age gate, and reporting tools.
+- API hosting and secrets: `render.yaml`.
+- App Store and Google Play: [STORE-LAUNCH.md](STORE-LAUNCH.md).
+- Security review and status of each finding: [SECURITY-AUDIT.md](SECURITY-AUDIT.md).

@@ -8,10 +8,10 @@
     "scheme": "sin",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.getwhatyaget.app",
-      "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Pick your least flattering photo."
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -22,7 +22,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.getwhatyaget.app"
+      "package": "com.getwhatyaget.app",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "server",
@@ -35,14 +39,23 @@
         {
           "backgroundColor": "#FF4E88",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 140
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Get What Ya Get uses your photo library so you can choose a profile photo.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
-    }
+    },
+    "description": "The dating app where you lead with your flaws. What can you handle?"
   }
 }

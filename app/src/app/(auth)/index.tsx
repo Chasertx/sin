@@ -111,14 +111,16 @@ export default function Welcome() {
               Create an account
             </Link>
           </View>
-          <Text
-            style={styles.demo}
-            onPress={() => {
-              setEmail('dana@demo.sin');
-              setPassword('password123');
-            }}>
-            ✨ Fill in a demo account
-          </Text>
+          {__DEV__ ? (
+            <Text
+              style={styles.demo}
+              onPress={() => {
+                setEmail('dana@demo.sin');
+                setPassword('password123');
+              }}>
+              ✨ Fill in a demo account
+            </Text>
+          ) : null}
         </Card>
       </ScrollView>
     </KeyboardAvoidingView>

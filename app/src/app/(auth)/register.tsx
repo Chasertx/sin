@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, ChipGroup, Field, Txt } from '@/components/ui';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { colors } from '@/lib/theme';
 import { GENDERS, INTERESTS, genderLabel, type Gender, type InterestedIn } from '@/lib/types';
@@ -67,6 +67,17 @@ export default function Register() {
         <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.pink} />
 
         <Button title="Let's go" onPress={submit} loading={busy} style={{ marginTop: 8 }} />
+        <Txt variant="caption" style={{ textAlign: 'center' }}>
+          By creating an account you confirm you're 18 or older and agree to our{' '}
+          <Txt variant="caption" style={styles.legal} onPress={() => Linking.openURL(TERMS_URL)} accessibilityRole="link">
+            Terms & community rules
+          </Txt>{' '}
+          and{' '}
+          <Txt variant="caption" style={styles.legal} onPress={() => Linking.openURL(PRIVACY_URL)} accessibilityRole="link">
+            Privacy policy
+          </Txt>
+          . Abusive content isn't tolerated.
+        </Txt>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -75,4 +86,5 @@ export default function Register() {
 const styles = StyleSheet.create({
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', gap: 12 },
+  legal: { color: colors.violet, textDecorationLine: 'underline' },
 });

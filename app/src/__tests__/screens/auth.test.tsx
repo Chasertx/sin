@@ -182,3 +182,14 @@ describe('Register', () => {
     expect(router.back).toHaveBeenCalled();
   });
 });
+
+it('sign-up shows the terms agreement with working links', async () => {
+  const { Linking } = require('react-native');
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  await render(<Register />);
+  expect(screen.getByText(/18 or older/)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Terms & community rules'));
+  await fireEvent.press(screen.getByText('Privacy policy'));
+  expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/terms\.html$/));
+  expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/privacy\.html$/));
+});

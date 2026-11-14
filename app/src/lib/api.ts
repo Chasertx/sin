@@ -61,7 +61,7 @@ async function request<T>(method: string, path: string, body?: unknown, isForm =
       body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError(`Can't reach the server at ${API_URL}. Is the API running?`, 0);
+    throw new ApiError(__DEV__ ? `Can't reach the server at ${API_URL}. Is the API running?` : "Can't connect right now. Check your internet and try again.", 0);
   }
 
   if (res.status === 401 && authToken) onUnauthorized?.();

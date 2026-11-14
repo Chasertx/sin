@@ -145,7 +145,7 @@ builder.Services.AddAntiforgery();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "We All Got Problems API", Version = "v1", Description = "What can you handle? The anti-dating app." });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Get What Ya Get API", Version = "v1", Description = "What can you handle? The anti-dating app." });
     var scheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
