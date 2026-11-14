@@ -143,15 +143,18 @@ export default function MyProblems() {
               <Text style={styles.logoutText}>Log out</Text>
             </Pressable>
           </View>
-          <Pressable onPress={pickPhoto} style={styles.photo} accessibilityRole="button" accessibilityLabel="Change photo">
-            {profile?.photoUrl ? (
-              <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-            ) : (
-              <View style={styles.photoEmpty}>
-                <Ionicons name="camera" size={30} color={colors.pink} />
-                <Text style={styles.photoHint}>Worst photo</Text>
-              </View>
-            )}
+          <Pressable onPress={pickPhoto} style={styles.photoWrap} accessibilityRole="button" accessibilityLabel="Change photo">
+            <View style={styles.photo}>
+              {profile?.photoUrl ? (
+                <Image source={{ uri: profile.photoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              ) : (
+                <View style={styles.photoEmpty}>
+                  <Ionicons name="camera" size={30} color={colors.pink} />
+                  <Text style={styles.photoHint}>Worst photo</Text>
+                </View>
+              )}
+            </View>
+            {/* Outside the clipped circle so the badge isn't cut off. */}
             <View style={styles.photoBadge}>
               <Ionicons name={busy === 'photo' ? 'hourglass' : 'pencil'} size={14} color={colors.white} />
             </View>
@@ -319,10 +322,11 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: fonts.black, fontSize: 28, color: colors.white },
   logout: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: tint(colors.white, 0.2), paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill },
   logoutText: { fontFamily: fonts.heavy, color: colors.white, fontSize: 13 },
-  photo: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.white, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
+  photoWrap: { width: 120, height: 120 },
+  photo: { flex: 1, borderRadius: 60, backgroundColor: colors.white, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
   photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 10 },
   photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.pink, textAlign: 'center' },
-  photoBadge: { position: 'absolute', right: 4, bottom: 4, width: 26, height: 26, borderRadius: 14, backgroundColor: colors.violet, alignItems: 'center', justifyContent: 'center' },
+  photoBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.white, backgroundColor: colors.violet, alignItems: 'center', justifyContent: 'center' },
   heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
   content: { padding: 16, gap: 12, marginTop: -8 },
   banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
