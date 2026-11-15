@@ -60,7 +60,7 @@ public static class ProfileEndpoints
         });
 
         // Where you are. Ick is US-only, so this is also what lets you into Discover.
-        g.MapPut("/location", async (LocationRequest r, ClaimsPrincipal me, SinDb db, LocationBypass bypass) =>
+        g.MapPut("/location", async (LocationRequest r, ClaimsPrincipal me, SinDb db, LocationBypass bypass, PracticeAccounts practice) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == me.UserId());
             if (user is null) return Results.NotFound();
@@ -69,11 +69,13 @@ public static class ProfileEndpoints
             {
                 (user.Latitude, user.Longitude) = UsGeo.Coarsen(r.Latitude, r.Longitude);
                 user.LocatedAt = DateTime.UtcNow;
+                if (practice.IsTester(user)) await practice.RelocateAsync(db, user); // their made-up people move with them
                 await db.SaveChangesAsync();
                 return Results.NoContent();
             }
 
-            if (bypass.Covers(user))
+            // Store reviewers, and practice accounts (which only ever meet made-up people), work from anywhere.
+            if (bypass.Covers(user) || practice.IsTester(user))
             {
                 bypass.Place(user);
                 await db.SaveChangesAsync();

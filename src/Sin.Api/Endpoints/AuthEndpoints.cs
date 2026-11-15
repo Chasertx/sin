@@ -16,7 +16,8 @@ public static class AuthEndpoints
     {
         var g = app.MapGroup("/api/auth").WithTags("Auth").RequireRateLimiting("auth");
 
-        g.MapPost("/register", async (RegisterRequest r, SinDb db, TokenService tokens, ContentFilter filter) =>
+        g.MapPost("/register", async (RegisterRequest r, SinDb db, TokenService tokens, ContentFilter filter,
+            PracticeAccounts practice, IPhotoStore photos) =>
         {
             var email = r.Email?.Trim().ToLowerInvariant() ?? "";
             if (!email.Contains('@') || email.Length > 256) return Error("Enter a valid email.");
@@ -25,6 +26,9 @@ public static class AuthEndpoints
             if (r.Age < 18 || r.Age > 120) return Error("You must be 18 or older.");
             if (filter.Check(r.DisplayName) is { } abusive) return Error(abusive);
             if (await db.Users.AnyAsync(u => u.Email == email)) return Error("That email is already registered.", 409);
+            var isPractice = practice.IsPracticeEmail(email);
+            if (isPractice && await practice.CountAsync(db) >= practice.MaxAccounts)
+                return Error("All the practice accounts are in use right now. Delete one first.", 409);
 
             var user = new User
             {
@@ -37,6 +41,8 @@ public static class AuthEndpoints
             };
             db.Users.Add(user);
             await db.SaveChangesAsync();
+            // A practice account arrives with a filled-in profile and a private cast of made-up people.
+            if (isPractice) await practice.PopulateAsync(db, user, photos);
             return Results.Ok(new AuthResponse(tokens.Create(user), user.Id, user.DisplayName));
         });
 

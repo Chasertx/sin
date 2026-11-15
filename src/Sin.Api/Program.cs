@@ -88,6 +88,7 @@ builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddSingleton<LocationBypass>();
+builder.Services.AddSingleton<PracticeAccounts>();
 var auth = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>

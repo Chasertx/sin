@@ -41,7 +41,7 @@ public static class SafetyEndpoints
         });
 
         // Permanently deletes the account and everything it created. Reports about others are kept for moderation.
-        app.MapDelete("/api/me", async (ClaimsPrincipal principal, SinDb db, IPhotoStore photos, ILoggerFactory logs) =>
+        app.MapDelete("/api/me", async (ClaimsPrincipal principal, SinDb db, IPhotoStore photos, ILoggerFactory logs, PracticeAccounts practice) =>
         {
             var meId = principal.UserId();
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == meId);
@@ -65,6 +65,7 @@ public static class SafetyEndpoints
             }
             db.Users.Remove(user);
             await db.SaveChangesAsync();
+            await practice.RemoveWorldAsync(db, meId, photos); // a practice account's made-up people go with it
 
             logs.CreateLogger("Safety").LogInformation("Deleted account {UserId}", meId);
             return Results.NoContent();

@@ -15,7 +15,7 @@ public static class FeedEndpoints
 
         // Profiles I haven't swiped on, who I'm into, who are into people like me, and who pass my filters.
         // Everyone involved has shared a US location: that's what keeps Ick US-only.
-        g.MapGet("/feed", async (ClaimsPrincipal principal, SinDb db, HttpRequest req, LocationBypass bypass, int? take) =>
+        g.MapGet("/feed", async (ClaimsPrincipal principal, SinDb db, HttpRequest req, LocationBypass bypass, PracticeAccounts practice, int? take) =>
         {
             var me = await db.Users.FirstOrDefaultAsync(u => u.Id == principal.UserId());
             if (me is null) return Results.NotFound();
@@ -34,7 +34,8 @@ public static class FeedEndpoints
                 _ => [InterestedIn.Everyone],
             };
 
-            var people = db.Users
+            // Practice accounts and real members live apart: neither ever comes across the other.
+            var people = practice.VisibleTo(me, db.Users)
                 .Include(u => u.Flaws)
                 .Where(u => u.Id != me.Id && u.Age >= 18 && !u.IsBanned)
                 .Where(u => u.Latitude != null && u.Longitude != null)
@@ -77,7 +78,7 @@ public static class FeedEndpoints
             return Results.Ok(profiles.Select(p => p.ToDtoFor(me, req)));
         });
 
-        g.MapPost("/swipes", async (SwipeRequest r, ClaimsPrincipal principal, SinDb db, IConfiguration config, LocationBypass bypass) =>
+        g.MapPost("/swipes", async (SwipeRequest r, ClaimsPrincipal principal, SinDb db, IConfiguration config, LocationBypass bypass, PracticeAccounts practice) =>
         {
             var meId = principal.UserId();
             if (r.TargetUserId == meId) return Error("You can't swipe on yourself. We know you want to.");
@@ -88,7 +89,7 @@ public static class FeedEndpoints
             if (!await EnsureLocatedAsync(me, db, bypass)) return LocationRequired();
 
             var target = await db.Users.FirstOrDefaultAsync(u => u.Id == r.TargetUserId && !u.IsBanned);
-            if (target is null || !target.HasLocation) return Results.NotFound();
+            if (target is null || !target.HasLocation || !practice.CanSee(me, target)) return Results.NotFound();
             if (await db.Blocks.AnyAsync(b => (b.BlockerId == meId && b.BlockedId == target.Id) || (b.BlockerId == target.Id && b.BlockedId == meId)))
                 return Results.NotFound();
 

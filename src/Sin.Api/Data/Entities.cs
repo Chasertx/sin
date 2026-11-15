@@ -44,6 +44,12 @@ public class User
     public List<Flaw> Flaws { get; set; } = [];
     public List<ExternalLogin> ExternalLogins { get; set; } = [];
 
+    /// <summary>
+    /// Set on the made-up people that fill a practice account's world: the id of the practice account
+    /// they belong to. Null for every real member. See <see cref="Sin.Api.Services.PracticeAccounts"/>.
+    /// </summary>
+    public Guid? PracticeOwnerId { get; set; }
+
     public bool HasLocation => Latitude is not null && Longitude is not null;
 
     /// <summary>SSO users start with Age = 0 until they fill in their profile.</summary>
