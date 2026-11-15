@@ -83,6 +83,9 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+// ---- Email: Resend for transactional email ----
+builder.Services.AddHttpClient<ResendEmailService>();
+
 // ---- Auth: JWT bearer ----
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton(TimeProvider.System);

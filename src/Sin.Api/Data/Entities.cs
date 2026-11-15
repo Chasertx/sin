@@ -20,6 +20,8 @@ public class User
     /// <summary>Banned by a moderator: can't sign in, hidden everywhere.</summary>
     public bool IsBanned { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Email has been verified and the account can swipe.</summary>
+    public bool EmailVerified { get; set; } = false;
 
     public int? HeightInches { get; set; }
     public Ethnicity? Ethnicity { get; set; }
@@ -139,4 +141,14 @@ public class Message
     public Guid SenderId { get; set; }
     public required string Text { get; set; }
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
+}
+
+/// <summary>One-time token sent via email for verifying the user's email address.</summary>
+public class EmailVerificationToken
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid UserId { get; set; }
+    public required string Token { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

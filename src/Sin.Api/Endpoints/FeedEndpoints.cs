@@ -20,6 +20,7 @@ public static class FeedEndpoints
             var me = await db.Users.FirstOrDefaultAsync(u => u.Id == principal.UserId());
             if (me is null) return Results.NotFound();
             if (me.NeedsOnboarding) return ProfileRequired();
+            if (!me.EmailVerified) return Error("Please verify your email before browsing. Check your inbox for a verification link.", 403);
             if (!await EnsureLocatedAsync(me, db, bypass)) return LocationRequired();
 
             Gender[] gendersIWant = me.InterestedIn switch
@@ -88,6 +89,7 @@ public static class FeedEndpoints
             var me = await db.Users.FirstOrDefaultAsync(u => u.Id == meId);
             if (me is null) return Results.NotFound();
             if (me.NeedsOnboarding) return ProfileRequired();
+            if (!me.EmailVerified) return Error("Please verify your email before swiping. Check your inbox for a verification link.", 403);
             if (!await EnsureLocatedAsync(me, db, bypass)) return LocationRequired();
 
             var target = await db.Users.FirstOrDefaultAsync(u => u.Id == r.TargetUserId && !u.IsBanned);

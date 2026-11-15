@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Sin.Api.Data;
@@ -17,33 +18,54 @@ public static class AuthEndpoints
         var g = app.MapGroup("/api/auth").WithTags("Auth").RequireRateLimiting("auth");
 
         g.MapPost("/register", async (RegisterRequest r, SinDb db, TokenService tokens, ContentFilter filter,
-            PracticeAccounts practice, IPhotoStore photos) =>
+            PracticeAccounts practice, IPhotoStore photos, ResendEmailService email, HttpContext http) =>
         {
-            var email = r.Email?.Trim().ToLowerInvariant() ?? "";
-            if (!email.Contains('@') || email.Length > 256) return Error("Enter a valid email.");
+            var emailAddr = r.Email?.Trim().ToLowerInvariant() ?? "";
+            if (!emailAddr.Contains('@') || emailAddr.Length > 256) return Error("Enter a valid email.");
             if (PasswordPolicy.Check(r.Password) is { } weak) return Error(weak);
             if (string.IsNullOrWhiteSpace(r.DisplayName) || r.DisplayName.Length > 50) return Error("Display name is required (max 50).");
             if (r.Age < 18 || r.Age > 120) return Error("You must be 18 or older.");
             if (filter.Check(r.DisplayName) is { } abusive) return Error(abusive);
-            if (await db.Users.AnyAsync(u => u.Email == email)) return Error("That email is already registered.", 409);
-            var isPractice = practice.IsPracticeEmail(email);
+            if (await db.Users.AnyAsync(u => u.Email == emailAddr)) return Error("That email is already registered.", 409);
+            var isPractice = practice.IsPracticeEmail(emailAddr);
             if (isPractice && await practice.CountAsync(db) >= practice.MaxAccounts)
                 return Error("All the practice accounts are in use right now. Delete one first.", 409);
 
             var user = new User
             {
-                Email = email,
+                Email = emailAddr,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(r.Password),
                 DisplayName = r.DisplayName.Trim(),
                 Age = r.Age,
                 Gender = r.Gender,
                 InterestedIn = r.InterestedIn,
+                EmailVerified = isPractice, // Practice accounts skip email verification
             };
             db.Users.Add(user);
             await db.SaveChangesAsync();
             // A practice account arrives with a filled-in profile and a private cast of made-up people.
             if (isPractice) await practice.PopulateAsync(db, user, photos);
-            return Results.Ok(new AuthResponse(tokens.Create(user), user.Id, user.DisplayName));
+
+            // For real accounts, create a verification token and send email
+            if (!isPractice)
+            {
+                var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+                var verificationToken = new EmailVerificationToken
+                {
+                    UserId = user.Id,
+                    Token = token,
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
+                };
+                db.EmailVerificationTokens.Add(verificationToken);
+                await db.SaveChangesAsync();
+
+                var scheme = http.Request.Scheme;
+                var host = http.Request.Host.Host;
+                var verificationUrl = $"{scheme}://{host}/verify-email?token={token}&userId={user.Id}";
+                await email.SendVerificationEmailAsync(emailAddr, user.DisplayName, verificationUrl);
+            }
+
+            return Results.Ok(new SignUpResponse(user.Id, emailAddr, user.DisplayName));
         });
 
         g.MapPost("/login", async (LoginRequest r, SinDb db, TokenService tokens, LoginThrottle throttle) =>
@@ -65,7 +87,28 @@ public static class AuthEndpoints
 
             throttle.Reset(email);
             if (user!.IsBanned) return Error("This account has been suspended.", 403);
+            if (!user.EmailVerified) return Error("Please verify your email before signing in. Check your inbox for a verification link.", 401);
             return Results.Ok(new AuthResponse(tokens.Create(user), user.Id, user.DisplayName, user.NeedsOnboarding));
+        });
+
+        g.MapPost("/verify-email", async (VerifyEmailRequest r, SinDb db) =>
+        {
+            if (string.IsNullOrWhiteSpace(r.Token)) return Error("Token is required.");
+
+            var token = await db.EmailVerificationTokens
+                .FirstOrDefaultAsync(t => t.UserId == r.UserId && t.Token == r.Token);
+
+            if (token is null) return Error("Invalid or expired token.", 401);
+            if (token.ExpiresAt < DateTime.UtcNow) return Error("Token has expired. Sign up again.", 401);
+
+            var user = await db.Users.FindAsync(r.UserId);
+            if (user is null) return Error("User not found.");
+
+            user.EmailVerified = true;
+            db.EmailVerificationTokens.Remove(token);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { message = "Email verified successfully. You can now sign in." });
         });
     }
 }

@@ -11,8 +11,14 @@ public record RegisterRequest(
 
 public record LoginRequest(string Email, string Password);
 
+public record VerifyEmailRequest(Guid UserId, string Token);
+
 /// <param name="NeedsOnboarding">True for brand-new SSO accounts that still need age/gender/preferences.</param>
-public record AuthResponse(string Token, Guid UserId, string DisplayName, bool NeedsOnboarding = false);
+/// <param name="EmailVerificationRequired">True if the user must verify their email before they can swipe.</param>
+public record AuthResponse(string Token, Guid UserId, string DisplayName, bool NeedsOnboarding = false, bool EmailVerificationRequired = false);
+
+/// <summary>Response after sign-up: user created but must verify email before they can log in.</summary>
+public record SignUpResponse(Guid UserId, string Email, string DisplayName);
 
 // ---- Profile ----
 public record FlawDto(Guid Id, FlawCategory Category, string Text);

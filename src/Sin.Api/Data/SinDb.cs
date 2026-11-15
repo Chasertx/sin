@@ -14,6 +14,7 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
     public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
     public DbSet<Block> Blocks => Set<Block>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
 
     // SQLite has no timezone-aware type; everything we store is UTC, so mark it as such on read.
     protected override void ConfigureConventions(ModelConfigurationBuilder c) =>
@@ -100,6 +101,13 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
         {
             e.Property(x => x.Text).HasMaxLength(Limits.MessageMaxLength);
             e.HasIndex(x => new { x.MatchId, x.Id });
+        });
+
+        b.Entity<EmailVerificationToken>(e =>
+        {
+            e.Property(x => x.Token).HasMaxLength(256);
+            e.HasIndex(x => new { x.UserId, x.Token });
+            e.HasIndex(x => x.ExpiresAt);
         });
     }
 }
