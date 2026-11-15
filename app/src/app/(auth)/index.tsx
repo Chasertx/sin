@@ -13,13 +13,15 @@ import { Button, Card, Field, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { parseSsoRedirect } from '@/lib/sso';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius, brand, tint } from '@/lib/theme';
+import { brand, fonts, makeStyles, radius, tint, useColors } from '@/lib/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const providerIcon: Record<string, keyof typeof Ionicons.glyphMap> = { Google: 'logo-google', Apple: 'logo-apple' };
 
 export default function Welcome() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signIn } = useSession();
   const [providers, setProviders] = useState<string[]>([]);
@@ -128,26 +130,28 @@ export default function Welcome() {
   );
 }
 
-const styles = StyleSheet.create({
-  blob: { position: 'absolute', width: 260, height: 260, borderRadius: 130 },
-  hero: { alignItems: 'center', marginBottom: 28 },
-  logo: {
-    width: 84,
-    height: 84,
-    borderRadius: 28,
-    backgroundColor: tint(colors.white, 0.25),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 18,
-    transform: [{ rotate: '-8deg' }],
-  },
-  brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, textAlign: 'center', letterSpacing: -2 },
-  tagline: { fontFamily: fonts.black, fontSize: 22, color: '#E3FFF5', marginTop: 10 },
-  pitch: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9), marginTop: 6, textAlign: 'center' },
-  sheet: { gap: 12, borderRadius: radius.xl, padding: 20 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
-  divider: { flex: 1, height: 1, backgroundColor: colors.line },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 4 },
-  link: { fontFamily: fonts.heavy, fontSize: 14, color: colors.primary },
-  demo: { fontFamily: fonts.bold, fontSize: 13, color: colors.deep, textAlign: 'center' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    blob: { position: 'absolute', width: 260, height: 260, borderRadius: 130 },
+    hero: { alignItems: 'center', marginBottom: 28 },
+    logo: {
+      width: 84,
+      height: 84,
+      borderRadius: 28,
+      backgroundColor: tint(colors.white, 0.25),
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 18,
+      transform: [{ rotate: '-8deg' }],
+    },
+    brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, textAlign: 'center', letterSpacing: -2 },
+    tagline: { fontFamily: fonts.black, fontSize: 22, color: '#E3FFF5', marginTop: 10 },
+    pitch: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9), marginTop: 6, textAlign: 'center' },
+    sheet: { gap: 12, borderRadius: radius.xl, padding: 20 },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
+    divider: { flex: 1, height: 1, backgroundColor: colors.line },
+    footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 4 },
+    link: { fontFamily: fonts.heavy, fontSize: 14, color: colors.primary },
+    demo: { fontFamily: fonts.bold, fontSize: 13, color: colors.deep, textAlign: 'center' },
+  }),
+);

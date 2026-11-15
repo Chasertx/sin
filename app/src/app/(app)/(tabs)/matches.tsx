@@ -5,10 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, Txt } from '@/components/ui';
 import { api } from '@/lib/api';
-import { colors, fonts, radius, shadow } from '@/lib/theme';
+import { fonts, makeStyles, radius, shadow, useColors } from '@/lib/theme';
 import type { Match } from '@/lib/types';
 
 export default function Matches() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const [matches, setMatches] = useState<Match[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -105,11 +107,13 @@ function open(m: Match) {
   router.push({ pathname: '/chat/[id]', params: { id: m.matchId, name: m.otherName, photo: m.otherPhotoUrl ?? '', userId: m.otherUserId } });
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, padding: 14, borderRadius: radius.lg },
-  dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
-  newRing: { padding: 3, borderRadius: 40, borderWidth: 3, borderColor: colors.primary },
-  newName: { fontFamily: fonts.heavy, fontSize: 13, color: colors.ink },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, padding: 14, borderRadius: radius.lg },
+    dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
+    newRing: { padding: 3, borderRadius: 40, borderWidth: 3, borderColor: colors.primary },
+    newName: { fontFamily: fonts.heavy, fontSize: 13, color: colors.ink },
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
+  }),
+);

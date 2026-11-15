@@ -9,12 +9,14 @@ import { SafetySheet } from '@/components/SafetySheet';
 import { Avatar, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius, shadow, brand } from '@/lib/theme';
+import { brand, fonts, makeStyles, radius, shadow, useColors } from '@/lib/theme';
 import { LIMITS, type Message } from '@/lib/types';
 
 const POLL_MS = 3000;
 
 export default function Chat() {
+  const styles = useStyles();
+  const colors = useColors();
   const { id, name = 'Match', photo, userId } = useLocalSearchParams<{ id: string; name?: string; photo?: string; userId?: string }>();
   const insets = useSafeAreaInsets();
   const { session } = useSession();
@@ -167,15 +169,17 @@ export default function Chat() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: colors.surface },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
-  bubble: { borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 10 },
-  mine: { borderBottomRightRadius: 6 },
-  theirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 6 },
-  bubbleText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: colors.ink },
-  time: { fontFamily: fonts.regular, fontSize: 11, color: colors.muted, marginTop: 3, marginHorizontal: 6 },
-  composer: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 10, backgroundColor: colors.surface },
-  input: { flex: 1, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: 18, paddingVertical: 12, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
-  send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: colors.surface },
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
+    bubble: { borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 10 },
+    mine: { borderBottomRightRadius: 6 },
+    theirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 6 },
+    bubbleText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: colors.ink },
+    time: { fontFamily: fonts.regular, fontSize: 11, color: colors.muted, marginTop: 3, marginHorizontal: 6 },
+    composer: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 10, backgroundColor: colors.surface },
+    input: { flex: 1, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: 18, paddingVertical: 12, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
+    send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

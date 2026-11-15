@@ -7,10 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, ChipGroup, Field, Txt } from '@/components/ui';
 import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { colors } from '@/lib/theme';
+import { makeStyles, useColors } from '@/lib/theme';
 import { GENDERS, INTERESTS, genderLabel, type Gender, type InterestedIn } from '@/lib/types';
 
 export default function Register() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signIn } = useSession();
   const [email, setEmail] = useState('');
@@ -83,8 +85,10 @@ export default function Register() {
   );
 }
 
-const styles = StyleSheet.create({
-  back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', gap: 12 },
-  legal: { color: colors.deep, textDecorationLine: 'underline' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    back: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    row: { flexDirection: 'row', gap: 12 },
+    legal: { color: colors.deep, textDecorationLine: 'underline' },
+  }),
+);

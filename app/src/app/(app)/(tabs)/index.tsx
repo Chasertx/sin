@@ -16,7 +16,7 @@ import { api, ApiError } from '@/lib/api';
 import { NO_FILTERS, activeFilterCount, filtersVersion } from '@/lib/filters';
 import { shareLocation } from '@/lib/location';
 import { useSession } from '@/lib/session';
-import { colors, coralish, fonts, minty, radius, shadow, brand, tint } from '@/lib/theme';
+import { brand, coralish, fonts, makeStyles, minty, radius, shadow, tint, useColors } from '@/lib/theme';
 import type { Preferences, Profile } from '@/lib/types';
 
 /**
@@ -56,6 +56,8 @@ const gates: Record<Gate, { emoji: string; title: string; text: string; action: 
 };
 
 export default function Discover() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { session, requireOnboarding } = useSession();
   const [queue, setQueue] = useState<Profile[]>([]);
@@ -309,6 +311,8 @@ function ActionButton({
   onPress: () => void;
   big?: boolean;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const size = big ? 74 : 62;
   return (
     <View style={{ alignItems: 'center', gap: 6 }}>
@@ -333,6 +337,7 @@ function MatchCelebration({
   onClose: () => void;
   onChat: () => void;
 }) {
+  const styles = useStyles();
   return (
     <Modal visible={!!match} transparent animationType="fade" onRequestClose={onClose}>
       <LinearGradient colors={[tint(brand[0], 0.97), tint(brand[1], 0.97), tint(brand[2], 0.97)]} style={styles.matchWrap}>
@@ -362,22 +367,24 @@ function MatchCelebration({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 },
-  brand: { fontFamily: fonts.black, fontSize: 32, color: colors.primary, letterSpacing: -0.5 },
-  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
-  textLink: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, marginTop: 6 },
-  deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },
-  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 28, paddingBottom: 14 },
-  profileBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 32, ...shadow },
-  actionLabel: { fontFamily: fonts.heavy, fontSize: 13, color: colors.inkSoft },
-  matchWrap: { flex: 1, justifyContent: 'center', padding: 28 },
-  matchInner: { alignItems: 'center', gap: 14 },
-  matchTitle: { fontFamily: fonts.black, fontSize: 44, color: colors.white, letterSpacing: -1 },
-  matchSub: { fontFamily: fonts.bold, fontSize: 17, color: tint(colors.white, 0.92), textAlign: 'center', lineHeight: 24 },
-  avatars: { flexDirection: 'row', marginVertical: 18 },
-  avatarRing: { borderWidth: 5, borderColor: colors.white, borderRadius: radius.pill },
-  keepSwiping: { fontFamily: fonts.heavy, fontSize: 15, color: colors.white, marginTop: 4 },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 },
+    brand: { fontFamily: fonts.black, fontSize: 32, color: colors.primary, letterSpacing: -0.5 },
+    iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
+    textLink: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, marginTop: 6 },
+    deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+    empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },
+    actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 28, paddingBottom: 14 },
+    profileBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 32, ...shadow },
+    actionLabel: { fontFamily: fonts.heavy, fontSize: 13, color: colors.inkSoft },
+    matchWrap: { flex: 1, justifyContent: 'center', padding: 28 },
+    matchInner: { alignItems: 'center', gap: 14 },
+    matchTitle: { fontFamily: fonts.black, fontSize: 44, color: colors.white, letterSpacing: -1 },
+    matchSub: { fontFamily: fonts.bold, fontSize: 17, color: tint(colors.white, 0.92), textAlign: 'center', lineHeight: 24 },
+    avatars: { flexDirection: 'row', marginVertical: 18 },
+    avatarRing: { borderWidth: 5, borderColor: colors.white, borderRadius: radius.pill },
+    keepSwiping: { fontFamily: fonts.heavy, fontSize: 15, color: colors.white, marginTop: 4 },
+  }),
+);

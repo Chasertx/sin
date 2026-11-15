@@ -16,7 +16,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { CategoryTag, Txt } from '@/components/ui';
-import { colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
+import { brand, fonts, makeStyles, radius, shadow, tint, useColors } from '@/lib/theme';
 import { formatHeight, type Profile } from '@/lib/types';
 
 export interface SwipeCardHandle {
@@ -37,6 +37,8 @@ export function SwipeCard({
   onOpen?: () => void;
   ref?: Ref<SwipeCardHandle>;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { width } = useWindowDimensions();
   const threshold = width * 0.27;
   const tx = useSharedValue(0);
@@ -124,6 +126,7 @@ export function SwipeCard({
 
 /** Static version used for the card peeking out behind the top one. */
 export function PeekCard({ profile }: { profile: Profile }) {
+  const styles = useStyles();
   return (
     <View style={[styles.card, styles.peek]}>
       <CardBody profile={profile} extra={profile.flaws.length - MAX_FLAWS_SHOWN} />
@@ -143,6 +146,8 @@ export function cardDetails(profile: Profile) {
 }
 
 function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
+  const styles = useStyles();
+  const colors = useColors();
   const details = cardDetails(profile);
   return (
     <>
@@ -197,35 +202,37 @@ function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-  },
-  peek: { transform: [{ scale: 0.94 }, { translateY: 18 }], opacity: 0.7 },
-  photo: { height: '46%', justifyContent: 'flex-end' },
-  // Sits in the top of the photo area, clear of the name and distance lines at the bottom.
-  noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 104 },
-  noPhotoInitial: { fontFamily: fonts.black, fontSize: 72, lineHeight: 80, color: tint(colors.white, 0.9) },
-  noPhotoCaption: { fontFamily: fonts.bold, fontSize: 13, color: tint(colors.white, 0.9) },
-  photoShade: { ...StyleSheet.absoluteFill, top: '45%' },
-  nameBlock: { padding: 20, gap: 2 },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
-  detailsRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  details: { fontFamily: fonts.bold, fontSize: 14, color: tint(colors.white, 0.9) },
-  name: { fontFamily: fonts.black, fontSize: 34, color: colors.white, flexShrink: 1 },
-  age: { fontFamily: fonts.bold, fontSize: 24, color: tint(colors.white, 0.85) },
-  more: { marginLeft: 'auto', alignSelf: 'center', backgroundColor: tint(colors.white, 0.22), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
-  moreText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.white },
-  body: { flex: 1, padding: 18, gap: 10 },
-  headline: { backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 12, borderLeftWidth: 4, borderLeftColor: colors.primary },
-  headlineText: { fontFamily: fonts.heavy, fontSize: 16, color: colors.primary },
-  flaw: { gap: 6, backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: 12 },
-  flawText: { fontSize: 15, lineHeight: 21 },
-  stamp: { position: 'absolute', top: 36, borderWidth: 4, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
-  stampYes: { left: 22, borderColor: colors.mint, backgroundColor: tint(colors.white, 0.85) },
-  stampNo: { right: 22, borderColor: colors.coral, backgroundColor: tint(colors.white, 0.85) },
-  stampText: { fontFamily: fonts.black, fontSize: 24, lineHeight: 26, textAlign: 'center' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    card: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+    },
+    peek: { transform: [{ scale: 0.94 }, { translateY: 18 }], opacity: 0.7 },
+    photo: { height: '46%', justifyContent: 'flex-end' },
+    // Sits in the top of the photo area, clear of the name and distance lines at the bottom.
+    noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 104 },
+    noPhotoInitial: { fontFamily: fonts.black, fontSize: 72, lineHeight: 80, color: tint(colors.white, 0.9) },
+    noPhotoCaption: { fontFamily: fonts.bold, fontSize: 13, color: tint(colors.white, 0.9) },
+    photoShade: { ...StyleSheet.absoluteFill, top: '45%' },
+    nameBlock: { padding: 20, gap: 2 },
+    nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+    detailsRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    details: { fontFamily: fonts.bold, fontSize: 14, color: tint(colors.white, 0.9) },
+    name: { fontFamily: fonts.black, fontSize: 34, color: colors.white, flexShrink: 1 },
+    age: { fontFamily: fonts.bold, fontSize: 24, color: tint(colors.white, 0.85) },
+    more: { marginLeft: 'auto', alignSelf: 'center', backgroundColor: tint(colors.white, 0.22), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
+    moreText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.white },
+    body: { flex: 1, padding: 18, gap: 10 },
+    headline: { backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 12, borderLeftWidth: 4, borderLeftColor: colors.primary },
+    headlineText: { fontFamily: fonts.heavy, fontSize: 16, color: colors.primary },
+    flaw: { gap: 6, backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: 12 },
+    flawText: { fontSize: 15, lineHeight: 21 },
+    stamp: { position: 'absolute', top: 36, borderWidth: 4, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
+    stampYes: { left: 22, borderColor: colors.mint, backgroundColor: tint(colors.white, 0.85) },
+    stampNo: { right: 22, borderColor: colors.coral, backgroundColor: tint(colors.white, 0.85) },
+    stampText: { fontFamily: fonts.black, fontSize: 24, lineHeight: 26, textAlign: 'center' },
+  }),
+);

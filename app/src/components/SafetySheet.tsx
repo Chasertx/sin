@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Field, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { colors, radius, tint } from '@/lib/theme';
+import { makeStyles, radius, tint, useColors } from '@/lib/theme';
 import { LIMITS, REPORT_REASONS, type ReportReason } from '@/lib/types';
 
 export interface SafetyAction {
@@ -28,6 +28,8 @@ interface Props {
 
 /** Bottom sheet with Block and Report. Both app stores require these wherever you can see another person. */
 export function SafetySheet({ visible, userId, name, onClose, onRemoved, extraActions = [] }: Props) {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<'menu' | 'report'>('menu');
   const [reason, setReason] = useState<ReportReason | null>(null);
@@ -132,6 +134,8 @@ export function SafetySheet({ visible, userId, name, onClose, onRemoved, extraAc
 }
 
 function Row({ icon, label, onPress, danger }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void; danger?: boolean }) {
+  const styles = useStyles();
+  const colors = useColors();
   const color = danger ? colors.coral : colors.ink;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfaceAlt }]}>
@@ -141,11 +145,13 @@ function Row({ icon, label, onPress, danger }: { icon: keyof typeof Ionicons.gly
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: tint(colors.ink, 0.45) },
-  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: 18, paddingTop: 10, gap: 4, maxHeight: '85%' },
-  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 10, borderRadius: radius.md },
-  reason: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.bg },
-  reasonOn: { backgroundColor: tint(colors.primary, 0.12) },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: tint(colors.ink, 0.45) },
+    sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: 18, paddingTop: 10, gap: 4, maxHeight: '85%' },
+    grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 8 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 15, paddingHorizontal: 10, borderRadius: radius.md },
+    reason: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.bg },
+    reasonOn: { backgroundColor: tint(colors.primary, 0.12) },
+  }),
+);

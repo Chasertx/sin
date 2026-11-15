@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, ChipGroup, Field, Txt } from '@/components/ui';
 import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { colors, radius, tint } from '@/lib/theme';
+import { makeStyles, radius, tint, useColors } from '@/lib/theme';
 import { GENDERS, INTERESTS, genderLabel, type Gender, type InterestedIn } from '@/lib/types';
 
 /**
@@ -15,6 +15,8 @@ import { GENDERS, INTERESTS, genderLabel, type Gender, type InterestedIn } from 
  * Nothing else in the app opens until this is saved.
  */
 export default function FinishSignUp() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { session, email, finishOnboarding, signOut } = useSession();
   const [name, setName] = useState(session?.displayName ?? '');
@@ -101,9 +103,11 @@ export default function FinishSignUp() {
   );
 }
 
-const styles = StyleSheet.create({
-  signedIn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 14 },
-  row: { flexDirection: 'row', gap: 12 },
-  legal: { color: colors.deep, textDecorationLine: 'underline' },
-  other: { borderColor: colors.line },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    signedIn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 14 },
+    row: { flexDirection: 'row', gap: 12 },
+    legal: { color: colors.deep, textDecorationLine: 'underline' },
+    other: { borderColor: colors.line },
+  }),
+);

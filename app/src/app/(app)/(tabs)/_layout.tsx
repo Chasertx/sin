@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fonts, shadow } from '@/lib/theme';
+import { fonts, shadow, useColors } from '@/lib/theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -14,6 +14,7 @@ const icon =
   );
 
 export default function TabsLayout() {
+  const colors = useColors();
   // Leave room for the phone's own bar (Android back/home/recents buttons, or the iPhone home indicator).
   const bottom = Math.max(useSafeAreaInsets().bottom, 10);
   return (

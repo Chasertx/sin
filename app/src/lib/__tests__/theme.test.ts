@@ -1,4 +1,4 @@
-import { categoryMeta, colors, brand, tint } from '../theme';
+import { brand, categoryMeta, categoryMetaDark, darkColors, lightColors, tint } from '../theme';
 import { CATEGORIES, GENDERS, INTERESTS, genderLabel } from '../types';
 
 describe('tint', () => {
@@ -14,8 +14,7 @@ describe('tint', () => {
 
 describe('categoryMeta', () => {
   it('has an emoji, label and valid color for every category', () => {
-    for (const c of CATEGORIES) {
-      const m = categoryMeta[c];
+    for (const m of CATEGORIES.flatMap((c) => [categoryMeta[c], categoryMetaDark[c]])) {
       expect(m.label.length).toBeGreaterThan(0);
       expect(m.emoji.length).toBeGreaterThan(0);
       expect(m.color).toMatch(/^#[0-9A-F]{6}$/i);
@@ -29,7 +28,7 @@ describe('categoryMeta', () => {
 
 describe('palette', () => {
   it('uses valid hex colors throughout', () => {
-    for (const c of [...Object.values(colors), ...brand]) expect(c).toMatch(/^#[0-9A-F]{6}$/i);
+    for (const c of [...Object.values(lightColors), ...Object.values(darkColors), ...brand]) expect(c).toMatch(/^#[0-9A-F]{6}$/i);
   });
 });
 

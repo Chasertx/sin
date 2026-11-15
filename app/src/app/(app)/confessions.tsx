@@ -7,11 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, CategoryTag, ChipGroup, Field, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { categoryMeta, colors, fonts, radius, shadow } from '@/lib/theme';
+import { fonts, makeStyles, radius, shadow, useCategoryMeta, useColors } from '@/lib/theme';
 import { CATEGORIES, LIMITS, type Flaw, type FlawCategory } from '@/lib/types';
 
 /** Everything you've confessed, on its own page, with a button to add another. */
 export default function Confessions() {
+  const styles = useStyles();
+  const colors = useColors();
+  const categoryMeta = useCategoryMeta();
   const insets = useSafeAreaInsets();
   const [flaws, setFlaws] = useState<Flaw[] | null>(null);
   const [adding, setAdding] = useState(false);
@@ -79,7 +82,7 @@ export default function Confessions() {
         </View>
         {!adding && !full ? (
           <Pressable onPress={() => setAdding(true)} style={styles.add} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add a confession">
-            <Ionicons name="add" size={20} color={colors.white} />
+            <Ionicons name="add" size={20} color={colors.onAccent} />
             <Text style={styles.addText}>Add</Text>
           </Pressable>
         ) : null}
@@ -147,12 +150,14 @@ export default function Confessions() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: colors.surface },
-  add: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, borderRadius: radius.pill, paddingLeft: 10, paddingRight: 14, paddingVertical: 8 },
-  addText: { color: colors.white, fontFamily: fonts.heavy, fontSize: 15 },
-  flaw: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16 },
-  del: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
-  empty: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 40 },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: colors.surface },
+    add: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.primary, borderRadius: radius.pill, paddingLeft: 10, paddingRight: 14, paddingVertical: 8 },
+    addText: { color: colors.onAccent, fontFamily: fonts.heavy, fontSize: 15 },
+    flaw: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16 },
+    del: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+    empty: { alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 40 },
+  }),
+);

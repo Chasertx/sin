@@ -16,7 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { avatarColors, categoryMeta, colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
+import { avatarColors, brand, fonts, makeStyles, radius, shadow, tint, useCategoryMeta, useColors } from '@/lib/theme';
 import type { FlawCategory } from '@/lib/types';
 
 // ---------- Text ----------
@@ -27,12 +27,15 @@ const variantStyle: Record<Variant, TextStyle> = {
   title: { fontFamily: fonts.black, fontSize: 28, lineHeight: 34, letterSpacing: -0.4 },
   heading: { fontFamily: fonts.heavy, fontSize: 19, lineHeight: 25 },
   body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23 },
-  caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
-  label: { fontFamily: fonts.heavy, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.muted },
+  caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  label: { fontFamily: fonts.heavy, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase' },
 };
 
 export function Txt({ variant = 'body', style, ...rest }: TextProps & { variant?: Variant }) {
-  return <Text {...rest} style={[{ color: colors.ink }, variantStyle[variant], style]} />;
+  const colors = useColors();
+  // Captions and labels are the quiet text; everything else is full strength.
+  const color = variant === 'caption' || variant === 'label' ? colors.muted : colors.ink;
+  return <Text {...rest} style={[{ color }, variantStyle[variant], style]} />;
 }
 
 // ---------- Buttons ----------
@@ -47,7 +50,10 @@ interface ButtonProps {
 }
 
 export function Button({ title, onPress, variant = 'gradient', icon, loading, disabled, style }: ButtonProps) {
-  const textColor = variant === 'gradient' || variant === 'dark' ? colors.white : colors.ink;
+  const styles = useStyles();
+  const colors = useColors();
+  // On the gradient: white. On the 'dark' button (ink-coloured, so it flips with the theme): the page colour.
+  const textColor = variant === 'gradient' ? colors.white : variant === 'dark' ? colors.bg : colors.ink;
   const content = (
     <View style={styles.btnInner}>
       {loading ? <ActivityIndicator testID="button-spinner" color={textColor} /> : icon}
@@ -83,6 +89,8 @@ export function Button({ title, onPress, variant = 'gradient', icon, loading, di
 
 // ---------- Inputs ----------
 export function Field({ label, style, ...rest }: TextInputProps & { label?: string }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={{ gap: 6 }}>
       {label ? <Txt variant="label">{label}</Txt> : null}
@@ -101,13 +109,16 @@ export function Chip({
   label,
   selected,
   onPress,
-  color = colors.deep,
+  color: accent,
 }: {
   label: string;
   selected?: boolean;
   onPress?: () => void;
   color?: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
+  const color = accent ?? colors.deep;
   return (
     <Pressable
       onPress={() => {
@@ -121,7 +132,7 @@ export function Chip({
         selected ? { backgroundColor: color, borderColor: color } : { borderColor: tint(color, 0.3) },
         { transform: [{ scale: pressed ? 0.95 : 1 }] },
       ]}>
-      <Text style={[styles.chipText, { color: selected ? colors.white : color }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: selected ? colors.onAccent : color }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -142,6 +153,7 @@ export function ChipGroup<T extends string>({
   render?: (o: T) => string;
   colorFor?: (o: T) => string;
 }) {
+  const styles = useStyles();
   return (
     <View style={{ gap: 8 }}>
       {label ? <Txt variant="label">{label}</Txt> : null}
@@ -161,7 +173,7 @@ export function MultiChipGroup<T extends string>({
   onChange,
   label,
   render = (o) => o,
-  color = colors.primary,
+  color,
 }: {
   options: readonly T[];
   values: readonly T[];
@@ -170,6 +182,8 @@ export function MultiChipGroup<T extends string>({
   render?: (o: T) => string;
   color?: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={{ gap: 8 }}>
       {label ? <Txt variant="label">{label}</Txt> : null}
@@ -181,7 +195,7 @@ export function MultiChipGroup<T extends string>({
               key={o}
               label={render(o)}
               selected={on}
-              color={color}
+              color={color ?? colors.primary}
               onPress={() => onChange(on ? values.filter((v) => v !== o) : [...values, o])}
             />
           );
@@ -192,7 +206,8 @@ export function MultiChipGroup<T extends string>({
 }
 
 export function CategoryTag({ category }: { category: FlawCategory }) {
-  const m = categoryMeta[category];
+  const styles = useStyles();
+  const m = useCategoryMeta()[category];
   return (
     <View style={[styles.tag, { backgroundColor: tint(m.color, 0.12) }]}>
       <Text style={[styles.tagText, { color: m.color }]}>
@@ -204,10 +219,13 @@ export function CategoryTag({ category }: { category: FlawCategory }) {
 
 // ---------- Cards & avatars ----------
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useStyles();
   return <View style={[styles.card, shadow, style]}>{children}</View>;
 }
 
 export function Avatar({ name, uri, size = 56 }: { name: string; uri?: string | null; size?: number }) {
+  const styles = useStyles();
+  const colors = useColors();
   // Hash the whole name so people with different names rarely share a color.
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
@@ -227,30 +245,32 @@ export function Avatar({ name, uri, size = 56 }: { name: string; uri?: string | 
   );
 }
 
-const styles = StyleSheet.create({
-  btn: { borderRadius: radius.pill, overflow: 'hidden', minHeight: 56, justifyContent: 'center' },
-  btnGradient: { minHeight: 56, justifyContent: 'center', paddingHorizontal: 22 },
-  btnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 22 },
-  btnText: { fontFamily: fonts.heavy, fontSize: 17 },
-  btnWhite: { backgroundColor: colors.white },
-  btnGhost: { backgroundColor: 'transparent', borderWidth: 2, borderColor: tint(colors.white, 0.6) },
-  btnDark: { backgroundColor: colors.ink },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.surface },
-  chipText: { fontFamily: fonts.heavy, fontSize: 14 },
-  tag: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-  tagText: { fontFamily: fonts.heavy, fontSize: 12 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 18 },
-  avatarFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    btn: { borderRadius: radius.pill, overflow: 'hidden', minHeight: 56, justifyContent: 'center' },
+    btnGradient: { minHeight: 56, justifyContent: 'center', paddingHorizontal: 22 },
+    btnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 22 },
+    btnText: { fontFamily: fonts.heavy, fontSize: 17 },
+    btnWhite: { backgroundColor: colors.surface },
+    btnGhost: { backgroundColor: 'transparent', borderWidth: 2, borderColor: tint(colors.white, 0.6) },
+    btnDark: { backgroundColor: colors.ink },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontFamily: fonts.regular,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip: { borderWidth: 1.5, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.surface },
+    chipText: { fontFamily: fonts.heavy, fontSize: 14 },
+    tag: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
+    tagText: { fontFamily: fonts.heavy, fontSize: 12 },
+    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 18 },
+    avatarFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  }),
+);

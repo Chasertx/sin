@@ -6,7 +6,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { cardDetails } from '@/components/SwipeCard';
 import { CategoryTag, Txt } from '@/components/ui';
-import { brand, colors, coralish, fonts, minty, radius, shadow, tint } from '@/lib/theme';
+import { brand, coralish, fonts, makeStyles, minty, radius, shadow, tint, useColors } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
 interface Props {
@@ -29,6 +29,8 @@ export function ProfileSheet({ profile, onClose, onDecide, onReport }: Props) {
 }
 
 function Content({ profile, onClose, onDecide, onReport }: Props & { profile: Profile }) {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const details = cardDetails(profile);
 
@@ -97,6 +99,8 @@ function Content({ profile, onClose, onDecide, onReport }: Props & { profile: Pr
 }
 
 function Decision({ colors: gradient, icon, label, onPress }: { colors: readonly [string, string]; icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label} (from profile)`} style={({ pressed }) => [{ flex: 1, transform: [{ scale: pressed ? 0.97 : 1 }] }]}>
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.decision}>
@@ -107,27 +111,29 @@ function Decision({ colors: gradient, icon, label, onPress }: { colors: readonly
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  photo: { height: 440, justifyContent: 'flex-end', backgroundColor: colors.surfaceAlt },
-  noPhoto: { alignItems: 'center', justifyContent: 'center', gap: 6 },
-  noPhotoInitial: { fontFamily: fonts.black, fontSize: 120, color: tint(colors.white, 0.9) },
-  noPhotoCaption: { fontFamily: fonts.bold, fontSize: 14, color: tint(colors.white, 0.9) },
-  photoShade: { ...StyleSheet.absoluteFill, top: '55%' },
-  nameBlock: { padding: 22, gap: 4 },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
-  name: { fontFamily: fonts.black, fontSize: 38, color: colors.white, flexShrink: 1 },
-  age: { fontFamily: fonts.bold, fontSize: 26, color: tint(colors.white, 0.85) },
-  detailsRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  details: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9) },
-  body: { padding: 18, gap: 12 },
-  headline: { backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 14, borderLeftWidth: 4, borderLeftColor: colors.primary },
-  headlineText: { fontFamily: fonts.heavy, fontSize: 17, color: colors.primary },
-  flaw: { gap: 8, backgroundColor: colors.surface, borderRadius: radius.md, padding: 14 },
-  flawText: { fontSize: 16, lineHeight: 23 },
-  report: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14 },
-  close: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  actions: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 14, backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
-  decision: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 56, borderRadius: radius.pill },
-  decisionText: { fontFamily: fonts.heavy, fontSize: 16, color: colors.white },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    photo: { height: 440, justifyContent: 'flex-end', backgroundColor: colors.surfaceAlt },
+    noPhoto: { alignItems: 'center', justifyContent: 'center', gap: 6 },
+    noPhotoInitial: { fontFamily: fonts.black, fontSize: 120, color: tint(colors.white, 0.9) },
+    noPhotoCaption: { fontFamily: fonts.bold, fontSize: 14, color: tint(colors.white, 0.9) },
+    photoShade: { ...StyleSheet.absoluteFill, top: '55%' },
+    nameBlock: { padding: 22, gap: 4 },
+    nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+    name: { fontFamily: fonts.black, fontSize: 38, color: colors.white, flexShrink: 1 },
+    age: { fontFamily: fonts.bold, fontSize: 26, color: tint(colors.white, 0.85) },
+    detailsRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    details: { fontFamily: fonts.bold, fontSize: 15, color: tint(colors.white, 0.9) },
+    body: { padding: 18, gap: 12 },
+    headline: { backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 14, borderLeftWidth: 4, borderLeftColor: colors.primary },
+    headlineText: { fontFamily: fonts.heavy, fontSize: 17, color: colors.primary },
+    flaw: { gap: 8, backgroundColor: colors.surface, borderRadius: radius.md, padding: 14 },
+    flawText: { fontSize: 16, lineHeight: 23 },
+    report: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14 },
+    close: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+    actions: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingTop: 14, backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
+    decision: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 56, borderRadius: radius.pill },
+    decisionText: { fontFamily: fonts.heavy, fontSize: 16, color: colors.white },
+  }),
+);

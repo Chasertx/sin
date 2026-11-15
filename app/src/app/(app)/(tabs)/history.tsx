@@ -6,11 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HistoryTimeline } from '@/components/HistoryTimeline';
 import { Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
-import { colors } from '@/lib/theme';
+import { makeStyles, useColors } from '@/lib/theme';
 import type { MatchHistoryEntry } from '@/lib/types';
 
 /** Who you matched with, when, and whether it ended. */
 export default function History() {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [entries, setEntries] = useState<MatchHistoryEntry[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -63,6 +64,8 @@ export default function History() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+  }),
+);

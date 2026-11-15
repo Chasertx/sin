@@ -21,7 +21,7 @@ import {
   withDistance,
   withHeight,
 } from '@/lib/filters';
-import { colors, fonts, radius, tint } from '@/lib/theme';
+import { fonts, makeStyles, radius, tint, useColors } from '@/lib/theme';
 import { ETHNICITIES, ethnicityLabel, formatHeight, type Preferences } from '@/lib/types';
 
 interface Props {
@@ -36,6 +36,7 @@ interface Props {
 
 /** Bottom sheet for choosing who shows up in Discover: age, distance, height and race / ethnicity. */
 export function FilterSheet({ visible, current, onClose, onApply, applyLabel = 'Save filters' }: Props) {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(current);
   const [saving, setSaving] = useState(false);
@@ -149,6 +150,8 @@ function Section({
   note?: string;
   children: ReactNode;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
@@ -166,22 +169,24 @@ function Section({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: tint(colors.ink, 0.45) },
-  sheet: {
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    maxHeight: '88%',
-  },
-  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 10 },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 4, marginBottom: 12 },
-  reset: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, paddingTop: 8 },
-  body: { gap: 12, paddingBottom: 12 },
-  section: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 10 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sectionIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
-  value: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: tint(colors.ink, 0.45) },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingHorizontal: 18,
+      paddingTop: 10,
+      maxHeight: '88%',
+    },
+    grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.line, marginBottom: 10 },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 4, marginBottom: 12 },
+    reset: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, paddingTop: 8 },
+    body: { gap: 12, paddingBottom: 12 },
+    section: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, gap: 10 },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    sectionIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+    value: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary },
+  }),
+);

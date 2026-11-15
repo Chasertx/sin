@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, Txt } from '@/components/ui';
 import { MIN_AGE, checkBirthDate, formatBirthDigits, saveAgeBlocked, saveAgePassed } from '@/lib/ageGate';
-import { brand, colors, fonts, radius, tint } from '@/lib/theme';
+import { brand, fonts, makeStyles, radius, tint, useColors } from '@/lib/theme';
 
 interface Props {
   /** True when this phone already gave an under-18 birth date. */
@@ -20,6 +20,8 @@ interface Props {
  * question isn't simply asked again.
  */
 export function AgeGate({ blocked: initiallyBlocked, onPassed }: Props) {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const [blocked, setBlocked] = useState(initiallyBlocked);
   /** Just the digits typed so far: MMDDYYYY. */
@@ -108,26 +110,28 @@ export function AgeGate({ blocked: initiallyBlocked, onPassed }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { flexGrow: 1, paddingHorizontal: 20, justifyContent: 'center' },
-  hero: { alignItems: 'center', marginBottom: 28 },
-  brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, letterSpacing: -2 },
-  tagline: { fontFamily: fonts.black, fontSize: 22, color: '#E3FFF5', marginTop: 10 },
-  sheet: { gap: 14, borderRadius: radius.xl, padding: 20 },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontFamily: fonts.heavy,
-    fontSize: 22,
-    letterSpacing: 1,
-    color: colors.ink,
-    textAlign: 'center',
-  },
-  error: { color: '#C2273A', fontFamily: fonts.bold, backgroundColor: tint(colors.coral, 0.1), borderRadius: radius.sm, padding: 10 },
-  emoji: { fontSize: 48, textAlign: 'center' },
-  muted: { color: colors.muted, textAlign: 'center' },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    content: { flexGrow: 1, paddingHorizontal: 20, justifyContent: 'center' },
+    hero: { alignItems: 'center', marginBottom: 28 },
+    brand: { fontFamily: fonts.black, fontSize: 72, lineHeight: 76, color: colors.white, letterSpacing: -2 },
+    tagline: { fontFamily: fonts.black, fontSize: 22, color: '#E3FFF5', marginTop: 10 },
+    sheet: { gap: 14, borderRadius: radius.xl, padding: 20 },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontFamily: fonts.heavy,
+      fontSize: 22,
+      letterSpacing: 1,
+      color: colors.ink,
+      textAlign: 'center',
+    },
+    error: { color: colors.danger, fontFamily: fonts.bold, backgroundColor: tint(colors.coral, 0.1), borderRadius: radius.sm, padding: 10 },
+    emoji: { fontSize: 48, textAlign: 'center' },
+    muted: { color: colors.muted, textAlign: 'center' },
+  }),
+);

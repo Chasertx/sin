@@ -20,7 +20,7 @@ import {
   markFiltersChanged,
 } from '@/lib/filters';
 import { useSession } from '@/lib/session';
-import { colors, fonts, radius, brand, tint } from '@/lib/theme';
+import { APPEARANCES, appearanceLabel, brand, fonts, makeStyles, radius, tint, useColors, useTheme } from '@/lib/theme';
 import {
   ETHNICITIES,
   GENDERS,
@@ -40,8 +40,11 @@ import {
 const HEIGHT_SLIDER = { min: LIMITS.minHeight, max: 90, start: 66 } as const;
 
 export default function MyProblems() {
+  const styles = useStyles();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signOut, needsOnboarding, finishOnboarding } = useSession();
+  const { appearance, setAppearance, scheme } = useTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // The basics show as a read-only summary; the pencil opens them for editing.
@@ -176,7 +179,7 @@ export default function MyProblems() {
             </View>
             {/* Outside the clipped circle so the badge isn't cut off. */}
             <View style={styles.photoBadge}>
-              <Ionicons name={busy === 'photo' ? 'hourglass' : 'pencil'} size={14} color={colors.white} />
+              <Ionicons name={busy === 'photo' ? 'hourglass' : 'pencil'} size={14} color={colors.onAccent} />
             </View>
           </Pressable>
           <Text style={styles.heroName}>{profile ? `${profile.displayName}${profile.age >= 18 ? `, ${profile.age}` : ''}` : ' '}</Text>
@@ -338,6 +341,17 @@ export default function MyProblems() {
             </View>
           </Card>
 
+          {/* Appearance */}
+          <Card style={{ gap: 12, marginTop: 8 }}>
+            <View>
+              <Txt variant="heading">Appearance</Txt>
+              <Txt variant="caption">
+                {appearance === 'system' ? `Following your phone, which is on ${scheme} right now.` : `Always ${scheme}, whatever your phone is set to.`}
+              </Txt>
+            </View>
+            <ChipGroup options={APPEARANCES} value={appearance} onChange={setAppearance} render={appearanceLabel} colorFor={() => colors.primary} />
+          </Card>
+
           {/* Account */}
           <Card style={{ gap: 6, marginTop: 8 }}>
             <Txt variant="heading">Account</Txt>
@@ -369,6 +383,8 @@ export default function MyProblems() {
 }
 
 function BasicsRow({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.basicsRow}>
       <Txt variant="label" style={{ width: 92 }}>
@@ -379,26 +395,28 @@ function BasicsRow({ label, value, muted }: { label: string; value: string; mute
   );
 }
 
-const styles = StyleSheet.create({
-  basicsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.deep, 0.12), alignItems: 'center', justifyContent: 'center' },
-  basicsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  heightHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heightValue: { fontFamily: fonts.heavy, color: colors.primary },
-  hero: { alignItems: 'center', paddingBottom: 28, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 20, marginBottom: 18 },
-  heroTitle: { fontFamily: fonts.black, fontSize: 28, color: colors.white },
-  logout: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: tint(colors.white, 0.2), paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill },
-  logoutText: { fontFamily: fonts.heavy, color: colors.white, fontSize: 13 },
-  photoWrap: { width: 120, height: 120 },
-  photo: { flex: 1, borderRadius: 60, backgroundColor: colors.white, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
-  photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 10 },
-  photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.primary, textAlign: 'center' },
-  photoBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.white, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center' },
-  heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
-  content: { padding: 16, gap: 12, marginTop: -8 },
-  banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
-  confessions: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
-  confessionsIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
-  link: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    basicsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.deep, 0.12), alignItems: 'center', justifyContent: 'center' },
+    basicsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    heightHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    heightValue: { fontFamily: fonts.heavy, color: colors.primary },
+    hero: { alignItems: 'center', paddingBottom: 28, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
+    heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 20, marginBottom: 18 },
+    heroTitle: { fontFamily: fonts.black, fontSize: 28, color: colors.white },
+    logout: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: tint(colors.white, 0.2), paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill },
+    logoutText: { fontFamily: fonts.heavy, color: colors.white, fontSize: 13 },
+    photoWrap: { width: 120, height: 120 },
+    photo: { flex: 1, borderRadius: 60, backgroundColor: colors.surface, borderWidth: 4, borderColor: colors.white, overflow: 'hidden' },
+    photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 10 },
+    photoHint: { fontFamily: fonts.heavy, fontSize: 12, color: colors.primary, textAlign: 'center' },
+    photoBadge: { position: 'absolute', right: 2, bottom: 2, width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: colors.white, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center' },
+    heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
+    content: { padding: 16, gap: 12, marginTop: -8 },
+    banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
+    confessions: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+    confessionsIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+    link: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  }),
+);

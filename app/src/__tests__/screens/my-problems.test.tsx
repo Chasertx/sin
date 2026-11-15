@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, StyleSheet } from 'react-native';
 
 import MyProblems from '@/app/(app)/(tabs)/me';
 import { api, ApiError } from '@/lib/api';
 import { NO_FILTERS, filtersVersion } from '@/lib/filters';
+import { ThemeProvider, darkColors, lightColors } from '@/lib/theme';
 import type { Profile } from '@/lib/types';
 
 const mockSession = { signOut: jest.fn(), needsOnboarding: false, finishOnboarding: jest.fn() };
@@ -323,5 +324,37 @@ describe('who you want to see', () => {
     await fireEvent.press(await screen.findByText('Save filters'));
     await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Hmm', "Can't connect right now."));
     expect(screen.getByText('Save filters')).toBeTruthy();
+  });
+});
+
+describe('appearance', () => {
+  const titleColor = () => StyleSheet.flatten(screen.getByText('Appearance').props.style).color;
+  const open = async () => {
+    await render(
+      <ThemeProvider>
+        <MyProblems />
+      </ThemeProvider>,
+    );
+    await screen.findByText('Dana, 29');
+  };
+
+  it('starts by following the phone', async () => {
+    await open();
+    expect(screen.getByText('Following your phone, which is on light right now.')).toBeTruthy();
+    expect(screen.getByText('Match device')).toBeTruthy();
+    expect(titleColor()).toBe(lightColors.ink);
+  });
+
+  it('switches the whole screen to dark when chosen, and back', async () => {
+    await open();
+    await fireEvent.press(screen.getByText('Dark'));
+
+    expect(await screen.findByText('Always dark, whatever your phone is set to.')).toBeTruthy();
+    expect(titleColor()).toBe(darkColors.ink);
+    expect(StyleSheet.flatten(screen.getByText('Dana').props.style).color).toBe(darkColors.ink);
+
+    await fireEvent.press(screen.getByText('Light'));
+    expect(await screen.findByText('Always light, whatever your phone is set to.')).toBeTruthy();
+    expect(titleColor()).toBe(lightColors.ink);
   });
 });

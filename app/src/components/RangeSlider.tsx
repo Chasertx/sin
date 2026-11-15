@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
-import { colors, shadow } from '@/lib/theme';
+import { makeStyles, shadow, useColors } from '@/lib/theme';
 
 const THUMB = 28;
 /** Thumbs are small to look at but get a finger-sized touch area. */
@@ -29,6 +29,8 @@ interface Props {
  * so the thumbs can never cross or get stuck on top of each other.
  */
 export function RangeSlider({ min, max, step = 1, values, onChange, minGap = step, labels, format = String, dimmed }: Props) {
+  const styles = useStyles();
+  const colors = useColors();
   const [width, setWidth] = useState(0); // distance the centre of a thumb can travel
   const [active, setActive] = useState<number | null>(null);
   const drag = useRef({ pageX: 0, value: 0 });
@@ -98,21 +100,23 @@ export function RangeSlider({ min, max, step = 1, values, onChange, minGap = ste
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
-const styles = StyleSheet.create({
-  wrap: { height: HIT, justifyContent: 'center' },
-  track: { position: 'absolute', left: THUMB / 2, right: THUMB / 2, height: 6, borderRadius: 3, backgroundColor: colors.surfaceAlt },
-  fill: { position: 'absolute', height: 6, borderRadius: 3 },
-  hit: { position: 'absolute', top: 0, width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
-  thumb: {
-    width: THUMB,
-    height: THUMB,
-    borderRadius: THUMB / 2,
-    backgroundColor: colors.white,
-    borderWidth: 3,
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  thumbActive: { transform: [{ scale: 1.18 }] },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    wrap: { height: HIT, justifyContent: 'center' },
+    track: { position: 'absolute', left: THUMB / 2, right: THUMB / 2, height: 6, borderRadius: 3, backgroundColor: colors.surfaceAlt },
+    fill: { position: 'absolute', height: 6, borderRadius: 3 },
+    hit: { position: 'absolute', top: 0, width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
+    thumb: {
+      width: THUMB,
+      height: THUMB,
+      borderRadius: THUMB / 2,
+      backgroundColor: colors.white,
+      borderWidth: 3,
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 3,
+    },
+    thumbActive: { transform: [{ scale: 1.18 }] },
+  }),
+);

@@ -4,7 +4,7 @@ import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from '
 
 import { Avatar, Txt } from '@/components/ui';
 import { buildTimeline, eventTitle, formatLasted, formatWhen, summarize, type TimelineEvent } from '@/lib/history';
-import { colors, fonts, radius, shadow, tint } from '@/lib/theme';
+import { fonts, makeStyles, radius, shadow, tint, useColors } from '@/lib/theme';
 import type { MatchHistoryEntry } from '@/lib/types';
 
 interface Props {
@@ -21,6 +21,8 @@ interface Props {
 
 /** Every match and unmatch as a timeline, newest first, grouped by month. */
 export function HistoryTimeline({ entries, loaded, error, refreshing, onRefresh, onOpen }: Props) {
+  const styles = useStyles();
+  const colors = useColors();
   const sections = useMemo(() => buildTimeline(entries), [entries]);
   const stats = summarize(entries);
 
@@ -64,6 +66,7 @@ export function HistoryTimeline({ entries, loaded, error, refreshing, onRefresh,
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
+  const styles = useStyles();
   return (
     <View style={[styles.stat, shadow]} accessible accessibilityLabel={`${label}: ${value}`}>
       <Text style={styles.statValue}>{value}</Text>
@@ -73,6 +76,8 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 function Row({ event, first, last, onOpen }: { event: TimelineEvent; first: boolean; last: boolean; onOpen: Props['onOpen'] }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { entry, kind } = event;
   const matched = kind === 'matched';
   const current = matched && !entry.endedAt && !!entry.matchId;
@@ -103,7 +108,7 @@ function Row({ event, first, last, onOpen }: { event: TimelineEvent; first: bool
       <View style={styles.rail}>
         <View style={[styles.line, first && { top: 30 }, last && { bottom: undefined, height: 30 }, first && last && { height: 0 }]} />
         <View style={[styles.marker, matched ? styles.markerMatched : styles.markerEnded]}>
-          <Ionicons name={matched ? 'heart' : 'heart-dislike'} size={15} color={matched ? colors.white : colors.coral} />
+          <Ionicons name={matched ? 'heart' : 'heart-dislike'} size={15} color={matched ? colors.onAccent : colors.coral} />
         </View>
       </View>
 
@@ -124,31 +129,33 @@ function Row({ event, first, last, onOpen }: { event: TimelineEvent; first: bool
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: 16, paddingBottom: 28, flexGrow: 1 },
-  stats: { flexDirection: 'row', gap: 10, marginBottom: 6 },
-  stat: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
-  statValue: { fontFamily: fonts.black, fontSize: 24, color: colors.primary },
-  month: { marginTop: 18, marginBottom: 10, marginLeft: 4 },
-  row: { flexDirection: 'row', alignItems: 'stretch' },
-  rail: { width: 40, alignItems: 'center' },
-  line: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: colors.line },
-  marker: { marginTop: 16, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  markerMatched: { backgroundColor: colors.primary },
-  markerEnded: { backgroundColor: colors.surface, borderWidth: 2, borderColor: tint(colors.coral, 0.5) },
-  card: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: 12,
-    marginBottom: 10,
-  },
-  cardEnded: { backgroundColor: colors.surfaceAlt, elevation: 0, shadowOpacity: 0 },
-  title: { fontFamily: fonts.heavy, fontSize: 16, lineHeight: 21 },
-  badge: { alignSelf: 'flex-start', marginTop: 4, backgroundColor: tint(colors.primary, 0.12), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.primary },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
-});
+const useStyles = makeStyles((colors) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: 16, paddingBottom: 28, flexGrow: 1 },
+    stats: { flexDirection: 'row', gap: 10, marginBottom: 6 },
+    stat: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
+    statValue: { fontFamily: fonts.black, fontSize: 24, color: colors.primary },
+    month: { marginTop: 18, marginBottom: 10, marginLeft: 4 },
+    row: { flexDirection: 'row', alignItems: 'stretch' },
+    rail: { width: 40, alignItems: 'center' },
+    line: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: colors.line },
+    marker: { marginTop: 16, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    markerMatched: { backgroundColor: colors.primary },
+    markerEnded: { backgroundColor: colors.surface, borderWidth: 2, borderColor: tint(colors.coral, 0.5) },
+    card: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: 12,
+      marginBottom: 10,
+    },
+    cardEnded: { backgroundColor: colors.surfaceAlt, elevation: 0, shadowOpacity: 0 },
+    title: { fontFamily: fonts.heavy, fontSize: 16, lineHeight: 21 },
+    badge: { alignSelf: 'flex-start', marginTop: 4, backgroundColor: tint(colors.primary, 0.12), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
+    badgeText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.primary },
+    empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 32 },
+  }),
+);
