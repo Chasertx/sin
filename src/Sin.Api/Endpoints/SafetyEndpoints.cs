@@ -47,9 +47,14 @@ public static class SafetyEndpoints
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == meId);
             if (user is null) return Results.NotFound();
 
-            var matchIds = await db.Matches.Where(m => m.UserAId == meId || m.UserBId == meId).Select(m => m.Id).ToListAsync();
+            var matches = await db.Matches.Where(m => m.UserAId == meId || m.UserBId == meId).ToListAsync();
+            var matchIds = matches.Select(m => m.Id).ToList();
             await db.Messages.Where(x => matchIds.Contains(x.MatchId)).ExecuteDeleteAsync();
-            await db.Matches.Where(m => matchIds.Contains(m.Id)).ExecuteDeleteAsync();
+            // The people they were matched with keep a nameless "matched, then ended" line; nothing
+            // that identifies the deleted account survives in anyone's history.
+            await MatchHistory.RecordEndAsync(db, matches, endedById: meId, accountDeleted: true);
+            db.Matches.RemoveRange(matches);
+            await MatchHistory.ForgetAsync(db, meId);
             await db.Swipes.Where(s => s.SwiperId == meId || s.TargetId == meId).ExecuteDeleteAsync();
             await db.Blocks.Where(b => b.BlockerId == meId || b.BlockedId == meId).ExecuteDeleteAsync();
             await db.Flaws.Where(f => f.UserId == meId).ExecuteDeleteAsync();
@@ -71,14 +76,15 @@ public static class SafetyEndpoints
         if (!await db.Blocks.AnyAsync(b => b.BlockerId == blockerId && b.BlockedId == blockedId))
             db.Blocks.Add(new Block { BlockerId = blockerId, BlockedId = blockedId });
 
-        var matchIds = await db.Matches
+        var matches = await db.Matches
             .Where(m => (m.UserAId == blockerId && m.UserBId == blockedId) || (m.UserAId == blockedId && m.UserBId == blockerId))
-            .Select(m => m.Id)
             .ToListAsync();
-        if (matchIds.Count > 0)
+        if (matches.Count > 0)
         {
+            var matchIds = matches.Select(m => m.Id).ToList();
             await db.Messages.Where(x => matchIds.Contains(x.MatchId)).ExecuteDeleteAsync();
-            await db.Matches.Where(m => matchIds.Contains(m.Id)).ExecuteDeleteAsync();
+            await MatchHistory.RecordEndAsync(db, matches, endedById: blockerId);
+            db.Matches.RemoveRange(matches);
         }
         await db.SaveChangesAsync();
     }

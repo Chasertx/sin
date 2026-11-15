@@ -37,6 +37,7 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen name="index" options={{ title: 'Discover', tabBarIcon: icon('flame', 'flame-outline') }} />
       <Tabs.Screen name="matches" options={{ title: 'Matches', tabBarIcon: icon('chatbubbles', 'chatbubbles-outline') }} />
+      <Tabs.Screen name="history" options={{ title: 'History', tabBarIcon: icon('time', 'time-outline') }} />
       <Tabs.Screen name="me" options={{ title: 'Possibly Icks', tabBarIcon: icon('happy', 'happy-outline') }} />
     </Tabs>
   );

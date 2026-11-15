@@ -10,6 +10,7 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
     public DbSet<Swipe> Swipes => Set<Swipe>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<PastMatch> PastMatches => Set<PastMatch>();
     public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
     public DbSet<Block> Blocks => Set<Block>();
     public DbSet<Report> Reports => Set<Report>();
@@ -86,6 +87,13 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
             e.HasIndex(m => m.UserAId);
             e.HasIndex(m => m.UserBId);
             e.HasMany(m => m.Messages).WithOne().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<PastMatch>(e =>
+        {
+            e.Property(p => p.OtherName).HasMaxLength(50);
+            e.HasIndex(p => p.UserId);
+            e.HasIndex(p => p.OtherUserId);
         });
 
         b.Entity<Message>(e =>

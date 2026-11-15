@@ -10,6 +10,7 @@ import type {
   Gender,
   InterestedIn,
   Match,
+  MatchHistoryEntry,
   Message,
   Preferences,
   Profile,
@@ -141,6 +142,7 @@ export const api = {
 
   // matches & chat
   matches: () => request<Match[]>('GET', '/api/matches'),
+  history: () => request<MatchHistoryEntry[]>('GET', '/api/matches/history'),
   messages: (matchId: string, after: number) =>
     request<Message[]>('GET', `/api/matches/${matchId}/messages?after=${after}`),
   send: (matchId: string, text: string) => request<Message>('POST', `/api/matches/${matchId}/messages`, { text }),

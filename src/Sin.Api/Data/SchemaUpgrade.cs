@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Sin.Api.Data;
@@ -8,12 +10,45 @@ namespace Sin.Api.Data;
 /// <summary>
 /// This project has no EF migrations: tables are created once, from the model, on an empty database.
 /// A column added to the model later would never reach a database that already exists. This closes
-/// that gap at startup by adding every column the model has and the table lacks.
-/// Additive only: it never drops, renames or retypes anything. New columns must be nullable
-/// (existing rows get null), and brand-new tables are not handled.
+/// that gap at startup by creating every table the model has and the database lacks, then adding
+/// every column the model has and its table lacks.
+/// Additive only: it never drops, renames or retypes anything. New columns on an existing table
+/// must be nullable (existing rows get null).
 /// </summary>
 public static class SchemaUpgrade
 {
+    /// <summary>
+    /// Creates whole tables (with their indexes and foreign keys) that were added to the model after
+    /// the database was first set up. Built the same way EF builds a fresh database, limited to the
+    /// tables that are missing.
+    /// </summary>
+    /// <returns>The names of the tables that were created.</returns>
+    public static IReadOnlyList<string> CreateMissingTables(SinDb db)
+    {
+        var model = db.GetService<IDesignTimeModel>().Model;
+        var missing = model.GetEntityTypes()
+            .Where(e => e.GetTableName() is not null)
+            .Select(e => (Table: e.GetTableName()!, Schema: e.GetSchema()))
+            .Distinct()
+            .Where(t => ExistingColumns(db, t.Table, t.Schema).Count == 0)
+            .ToHashSet();
+        if (missing.Count == 0) return [];
+
+        var operations = db.GetService<IMigrationsModelDiffer>()
+            .GetDifferences(null, model.GetRelationalModel())
+            .Where(op => op switch
+            {
+                CreateTableOperation t => missing.Contains((t.Name, t.Schema)),
+                CreateIndexOperation i => missing.Contains((i.Table, i.Schema)),
+                AddForeignKeyOperation f => missing.Contains((f.Table, f.Schema)),
+                _ => false,
+            })
+            .ToList();
+        var commands = db.GetService<IMigrationsSqlGenerator>().Generate(operations, model);
+        db.GetService<IMigrationCommandExecutor>().ExecuteNonQuery(commands, db.GetService<IRelationalConnection>());
+        return missing.Select(t => t.Table).Order().ToList();
+    }
+
     /// <returns>The columns that were added, as "Table.Column".</returns>
     public static IReadOnlyList<string> AddMissingColumns(SinDb db)
     {

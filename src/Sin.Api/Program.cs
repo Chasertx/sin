@@ -197,7 +197,9 @@ using (var scope = app.Services.CreateScope())
     {
         db.Database.EnsureCreated();
     }
-    // No migrations here: bring an existing database up to the current model by adding new columns.
+    // No migrations here: bring an existing database up to the current model by adding new tables and columns.
+    foreach (var table in SchemaUpgrade.CreateMissingTables(db))
+        app.Logger.LogInformation("Database upgraded: created table {Table}", table);
     foreach (var column in SchemaUpgrade.AddMissingColumns(db))
         app.Logger.LogInformation("Database upgraded: added column {Column}", column);
     if (config.GetValue<bool>("Demo:SeedUsers")) SeedData.Seed(db);

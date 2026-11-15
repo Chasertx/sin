@@ -106,6 +106,26 @@ public class Match
     public List<Message> Messages { get; set; } = [];
 }
 
+/// <summary>
+/// One person's record of a match that is over. A match and its messages are deleted when it ends;
+/// this is what is kept so History can still say who it was and when. An ended match leaves two
+/// rows, one in each person's history.
+/// </summary>
+public class PastMatch
+{
+    public long Id { get; set; }
+    /// <summary>Whose history this row is in.</summary>
+    public Guid UserId { get; set; }
+    /// <summary>Null once that person has deleted their account.</summary>
+    public Guid? OtherUserId { get; set; }
+    /// <summary>Their name when the match ended. Null once they have deleted their account.</summary>
+    public string? OtherName { get; set; }
+    public DateTime MatchedAt { get; set; }
+    public DateTime EndedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>True if <see cref="UserId"/> is the one who unmatched or blocked.</summary>
+    public bool EndedByMe { get; set; }
+}
+
 public class Message
 {
     public long Id { get; set; }

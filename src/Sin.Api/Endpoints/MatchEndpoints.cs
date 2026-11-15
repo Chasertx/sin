@@ -39,6 +39,32 @@ public static class MatchEndpoints
             return Results.Ok(result);
         });
 
+        // Every match you have had, still going or over, newest activity first.
+        g.MapGet("/history", async (ClaimsPrincipal principal, SinDb db, HttpRequest req) =>
+        {
+            var meId = principal.UserId();
+            var current = await db.Matches
+                .Where(m => m.UserAId == meId || m.UserBId == meId)
+                .Select(m => new { m.Id, m.CreatedAt, OtherId = m.UserAId == meId ? m.UserBId : m.UserAId })
+                .ToListAsync();
+            var otherIds = current.Select(m => m.OtherId).ToList();
+            var others = await db.Users.Where(u => otherIds.Contains(u.Id) && !u.IsBanned).ToDictionaryAsync(u => u.Id);
+
+            var past = await db.PastMatches
+                .Where(p => p.UserId == meId)
+                .OrderByDescending(p => p.EndedAt)
+                .Take(MatchHistory.MaxPastEntries)
+                .ToListAsync();
+
+            var entries = current
+                .Where(m => others.ContainsKey(m.OtherId))
+                .Select(m => new MatchHistoryDto($"m-{m.Id}", others[m.OtherId].DisplayName,
+                    req.PhotoUrl(others[m.OtherId].PhotoFile), m.CreatedAt, null, false, m.Id, m.OtherId))
+                .Concat(past.Select(p => new MatchHistoryDto($"p-{p.Id}", p.OtherName, null, p.MatchedAt, p.EndedAt, p.EndedByMe, null, p.OtherUserId)))
+                .OrderByDescending(e => e.EndedAt ?? e.MatchedAt);
+            return Results.Ok(entries);
+        });
+
         g.MapGet("/{matchId:guid}/messages", async (Guid matchId, long? after, ClaimsPrincipal principal, SinDb db) =>
         {
             if (!await IsInMatch(db, matchId, principal.UserId())) return Results.NotFound();
@@ -64,14 +90,25 @@ public static class MatchEndpoints
             return Results.Ok(msg.ToDto());
         });
 
-        // Unmatch: deletes the match and its messages. Swipes stay so you don't see them again.
+        // Unmatch: deletes the match and its messages, leaving a line in both people's history.
+        // Swipes stay so you don't see them again.
         g.MapDelete("/{matchId:guid}", async (Guid matchId, ClaimsPrincipal principal, SinDb db) =>
         {
             var meId = principal.UserId();
-            var deleted = await db.Matches
-                .Where(m => m.Id == matchId && (m.UserAId == meId || m.UserBId == meId))
-                .ExecuteDeleteAsync();
-            return deleted == 0 ? Results.NotFound() : Results.NoContent();
+            var match = await db.Matches.FirstOrDefaultAsync(m => m.Id == matchId && (m.UserAId == meId || m.UserBId == meId));
+            if (match is null) return Results.NotFound();
+
+            await MatchHistory.RecordEndAsync(db, [match], endedById: meId);
+            db.Matches.Remove(match); // its messages go with it (cascade)
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Results.NotFound(); // the other person unmatched at the same moment
+            }
+            return Results.NoContent();
         });
     }
 

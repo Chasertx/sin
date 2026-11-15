@@ -135,6 +135,23 @@ export interface Match {
   matchedAt: string;
 }
 
+/** One match in your history. `endedAt` is null while you're still matched. */
+export interface MatchHistoryEntry {
+  /** Stable key for lists; not a match id. */
+  id: string;
+  /** Null when that person has since deleted their account. */
+  otherName: string | null;
+  /** Only for matches that are still going. */
+  otherPhotoUrl: string | null;
+  matchedAt: string;
+  endedAt: string | null;
+  /** True if you were the one who unmatched or blocked. */
+  endedByMe: boolean;
+  /** Only for matches that are still going: opens the chat. */
+  matchId: string | null;
+  otherUserId: string | null;
+}
+
 export interface Message {
   id: number;
   senderId: string;

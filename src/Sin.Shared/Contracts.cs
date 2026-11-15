@@ -72,6 +72,23 @@ public record MatchDto(
     string? LastMessage,
     DateTime MatchedAt);
 
+/// <summary>One match in your history, whether it is still going or over.</summary>
+/// <param name="Id">Stable key for lists; not a match id.</param>
+/// <param name="OtherName">Null when that person has since deleted their account.</param>
+/// <param name="OtherPhotoUrl">Only for matches that are still going.</param>
+/// <param name="EndedAt">Null while you are still matched.</param>
+/// <param name="EndedByMe">True if you were the one who unmatched or blocked.</param>
+/// <param name="MatchId">Only for matches that are still going: opens the chat.</param>
+public record MatchHistoryDto(
+    string Id,
+    string? OtherName,
+    string? OtherPhotoUrl,
+    DateTime MatchedAt,
+    DateTime? EndedAt,
+    bool EndedByMe,
+    Guid? MatchId,
+    Guid? OtherUserId);
+
 public record MessageDto(long Id, Guid SenderId, string Text, DateTime SentAt);
 
 public record SendMessageRequest(string Text);
