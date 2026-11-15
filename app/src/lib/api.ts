@@ -15,6 +15,7 @@ import type {
   Preferences,
   Profile,
   ReportReason,
+  SignUpResponse,
   SwipeResult,
 } from './types';
 
@@ -101,8 +102,9 @@ export const api = {
     age: number;
     gender: Gender;
     interestedIn: InterestedIn;
-  }) => request<AuthResponse>('POST', '/api/auth/register', r),
+  }) => request<SignUpResponse>('POST', '/api/auth/register', r),
   login: (email: string, password: string) => request<AuthResponse>('POST', '/api/auth/login', { email, password }),
+  verifyEmail: (userId: string, token: string) => request<{ message: string }>('POST', '/api/auth/verify-email', { userId, token }),
   ssoProviders: () => request<string[]>('GET', '/api/auth/providers'),
   ssoStartUrl: (provider: string, returnUrl: string) =>
     `${API_URL}/api/auth/sso/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`,

@@ -24,6 +24,7 @@ jest.mock('@/lib/api', () => {
 const mockedApi = api as jest.Mocked<typeof api>;
 const openAuth = WebBrowser.openAuthSessionAsync as jest.Mock;
 const authResponse = { token: 'jwt', userId: 'u1', displayName: 'Dana', needsOnboarding: false };
+const signUpResponse = { userId: 'u2', email: 'new@user.app', displayName: 'Chase' };
 
 describe('Welcome / login', () => {
   beforeEach(() => mockedApi.ssoProviders.mockResolvedValue(['Google', 'Apple']));
@@ -147,15 +148,15 @@ describe('Register', () => {
     expect(mockedApi.register).not.toHaveBeenCalled();
   });
 
-  it('registers with the chosen options and goes to Possibly Icks', async () => {
-    mockedApi.register.mockResolvedValue(authResponse);
+  it('registers with the chosen options and goes to verify email', async () => {
+    mockedApi.register.mockResolvedValue(signUpResponse);
     await render(<Register />);
     await fill();
     await fireEvent.press(screen.getByText('Man'));
     await fireEvent.press(screen.getByText('Women'));
     await fireEvent.press(screen.getByText("Let's go"));
 
-    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/me'));
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/(auth)/verify-email' })));
     expect(mockedApi.register).toHaveBeenCalledWith({
       email: 'new@user.app',
       password: 'password123',
@@ -164,7 +165,7 @@ describe('Register', () => {
       gender: 'Man',
       interestedIn: 'Women',
     });
-    expect(mockSession.signIn).toHaveBeenCalledWith(authResponse);
+    expect(mockSession.signIn).not.toHaveBeenCalled();
   });
 
   it('shows validation errors from the server', async () => {

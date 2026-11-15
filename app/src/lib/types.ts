@@ -91,6 +91,12 @@ export interface AuthResponse {
   email?: string | null;
 }
 
+export interface SignUpResponse {
+  userId: string;
+  email: string;
+  displayName: string;
+}
+
 export interface Flaw {
   id: string;
   category: FlawCategory;

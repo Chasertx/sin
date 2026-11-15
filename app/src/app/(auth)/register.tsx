@@ -28,11 +28,12 @@ export default function Register() {
     if (!ageNum) return Alert.alert('Age', 'Pop your age in as a number.');
     setBusy(true);
     try {
-      await signIn(
-        await api.register({ email: email.trim(), password, displayName: name.trim(), age: ageNum, gender, interestedIn }),
-      );
-      // Brand new: nobody can see you until you confess something.
-      router.replace('/me');
+      const signupResult = await api.register({ email: email.trim(), password, displayName: name.trim(), age: ageNum, gender, interestedIn });
+      // New user: must verify email before they can sign in
+      router.replace({
+        pathname: '/(auth)/verify-email',
+        params: { userId: signupResult.userId },
+      });
     } catch (e) {
       Alert.alert('Hmm', e instanceof ApiError ? e.message : String(e));
     } finally {
