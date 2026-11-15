@@ -50,6 +50,17 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Ick uses your location to check you're in the United States and to show you people nearby. Other people only see how far away you are.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "locationFullAccuracyPermission": false,
+          "motionUsagePermission": false,
+          "isIosReducedAccuracyByDefault": true
+        }
       ]
     ],
     "experiments": {
@@ -67,6 +78,7 @@
         "projectId": "79dc5325-fd21-48da-93c2-cc8be63a04ee"
       }
     },
-    "owner": "chaxter"
+    "owner": "chaxter",
+    "backgroundColor": "#F2FBF7"
   }
 }

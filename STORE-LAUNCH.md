@@ -13,6 +13,8 @@ Everything in the code that the stores require is done. What's left needs your a
 | Delete account inside the app | Possibly Icks → Account → Delete account |
 | Public privacy policy and terms | `/privacy.html` and `/terms.html` on the API |
 | Photos don't leak location | Every upload is re-encoded with hidden data removed |
+| United States only | The app asks for location; the API only accepts a position inside the US. Without one you can't browse, be shown to anyone, or be swiped on |
+| Filters (age, distance, height, race / ethnicity) | Possibly Icks → Who you want to see. Height and ethnicity on a profile are optional |
 | App icon, splash screen, permissions text | `app/app.json`, `app/assets/images` |
 | Store build configuration | `app/eas.json` |
 | Demo-login shortcut hidden | Only shows in development builds |
@@ -21,7 +23,7 @@ Sign-in is email and password only for version 1. Google sign-in stays off: turn
 
 ## Step 1. Decisions and accounts (you)
 
-1. **Support email address.** Both legal pages currently show `example@example.com`. That address cannot receive mail, so replace it with a real inbox before submitting to the stores.
+1. **Support email address.** Done: the legal pages show the support inbox. Make sure someone reads it; reports and deletion requests arrive there.
 2. **Apple Developer Program**, $99 per year: https://developer.apple.com/programs/enroll/
 3. **Google Play Console**, $25 once: https://play.google.com/console/signup
    New personal accounts must run a closed test with 12 testers for 14 days before going public. Start this early.
@@ -32,8 +34,9 @@ Sign-in is email and password only for version 1. Google sign-in stays off: turn
 1. Create the production Supabase project, `get-what-ya-get-prod`, with a **public** storage bucket named `photos`.
 2. In Render: New → Blueprint → pick the `sin` repo. It reads `render.yaml` and asks for three secrets: the session-pooler connection string, the Supabase URL, and the service key.
 3. In the Render dashboard, open the service's Environment tab and add `Moderation__ApiKey` with an Anthropic API key (console.anthropic.com → API keys). Until it is set, photos and profile text are **not** screened for porn or gore; the API logs a warning at startup to say so.
-4. Open `https://<your-service>.onrender.com/health`. It should say `{"status":"ok"}`.
-5. If the address is not `https://get-what-ya-get-api-3dtp.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
+4. In the same Environment tab, add `Location__BypassEmails` with the email of the account you will give to store reviewers (Step 6). Reviewers are often outside the US or have location switched off; without this they can't get past Discover and the app is rejected. Leave everyone else off this list.
+5. Open `https://<your-service>.onrender.com/health`. It should say `{"status":"ok"}`.
+6. If the address is not `https://get-what-ya-get-api-3dtp.onrender.com`, change `EXPO_PUBLIC_API_URL` in `app/eas.json` (two places).
 
 Render's free plan puts the API to sleep after 15 minutes idle, and waking takes up to a minute. A store reviewer who hits that sees an app that won't load. Use the $7 per month plan (or your Azure hosting) before submitting for review.
 
@@ -84,6 +87,8 @@ EAS asks to create the signing keys for you. Say yes to both.
 
 **Age rating:** Apple 17+ or 18+ (answer "yes" to user-generated content and dating). Google: complete the questionnaire as a dating app with user-generated content; expect Mature 17+.
 
+**Countries:** United States only. Google Play: Production → Countries / regions. App Store Connect: Pricing and Availability. The app also enforces this itself.
+
 **Privacy policy URL:** `https://<your-service>.onrender.com/privacy.html`
 
 **Account deletion URL (Google asks for this):** the same privacy page. It explains in-app deletion and deletion by email.
@@ -102,7 +107,10 @@ Both stores ask what data the app collects. These answers match what the app doe
 | Photos | Yes, optional | App functionality, safety screening | Yes |
 | Messages, confessions, headline | Yes | App functionality | Yes |
 | Reports and blocks | Yes | Safety | Yes |
-| Location, contacts, advertising ID, health, financial | No | | |
+| Approximate location (rounded to about a mile; never precise) | Yes | App functionality: US-only check, distance | Yes |
+| Race and ethnicity | Yes, optional | App functionality: other people's filters. Not shown on the profile | Yes |
+| Height (Google: "Other info" under Personal info; Apple: "Other user content") | Yes, optional | App functionality | Yes |
+| Precise location, contacts, advertising ID, health, financial | No | | |
 
 - Tracking and ads: none.
 - Data sold or shared with third parties for their own use: none. Photos and profile text go to Anthropic only as a service provider, to screen them for prohibited content; say so if a form asks about processors.
@@ -112,10 +120,11 @@ Both stores ask what data the app collects. These answers match what the app doe
 
 ## Step 6. Review notes and submission
 
-Reviewers need a login. Create two accounts in the live app (so one can show the other in Discover, each with a confession), and give one to the reviewer:
+Reviewers need a login. Create two accounts in the live app (so one can show the other in Discover, each with a confession), and give one to the reviewer. Put the reviewer account's email in `Location__BypassEmails` on Render (Step 2) so it works from outside the US:
 
 > Sign in with: `<review account email>` / `<password>`.
 > This is a dating app for adults with user-generated text and one optional photo.
+> The app is only available in the United States and asks for location to check that. This review account is exempt, so it works from any country and with location denied.
 > Safety features: a word filter on all text; automatic AI screening that refuses pornographic or gory photos and profile text before they are published; Report and Block from the flag button on the Discover screen and the "..." menu in chat; reports are reviewed within 24 hours and offending accounts are banned. Account deletion: Possibly Icks tab → Account → Delete account.
 
 Then submit:

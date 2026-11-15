@@ -13,11 +13,13 @@ public static class FeedEndpoints
     {
         var g = app.MapGroup("/api").WithTags("Feed & swiping").RequireAuthorization();
 
-        // Profiles I haven't swiped on, who I'm into and who are into people like me.
-        g.MapGet("/feed", async (ClaimsPrincipal principal, SinDb db, HttpRequest req, int? take) =>
+        // Profiles I haven't swiped on, who I'm into, who are into people like me, and who pass my filters.
+        // Everyone involved has shared a US location: that's what keeps Ick US-only.
+        g.MapGet("/feed", async (ClaimsPrincipal principal, SinDb db, HttpRequest req, LocationBypass bypass, int? take) =>
         {
             var me = await db.Users.FirstOrDefaultAsync(u => u.Id == principal.UserId());
             if (me is null) return Results.NotFound();
+            if (!await EnsureLocatedAsync(me, db, bypass)) return LocationRequired();
 
             Gender[] gendersIWant = me.InterestedIn switch
             {
@@ -32,13 +34,39 @@ public static class FeedEndpoints
                 _ => [InterestedIn.Everyone],
             };
 
-            var profiles = await db.Users
+            var people = db.Users
                 .Include(u => u.Flaws)
                 .Where(u => u.Id != me.Id && u.Age >= 18 && !u.IsBanned)
+                .Where(u => u.Latitude != null && u.Longitude != null)
                 .Where(u => !db.Blocks.Any(b => (b.BlockerId == me.Id && b.BlockedId == u.Id) || (b.BlockerId == u.Id && b.BlockedId == me.Id)))
                 .Where(u => gendersIWant.Contains(u.Gender) && prefsThatWantMe.Contains(u.InterestedIn))
                 .Where(u => u.Flaws.Count >= Limits.MinFlawsToAppearInFeed)
-                .Where(u => !db.Swipes.Any(s => s.SwiperId == me.Id && s.TargetId == u.Id))
+                .Where(u => !db.Swipes.Any(s => s.SwiperId == me.Id && s.TargetId == u.Id));
+
+            // ---- My filters. A filter on height or ethnicity only shows people who've filled that in. ----
+            if (me.PrefMinAge is { } minAge) people = people.Where(u => u.Age >= minAge);
+            if (me.PrefMaxAge is { } maxAge) people = people.Where(u => u.Age <= maxAge);
+            if (me.PrefMinHeightInches is { } minHeight) people = people.Where(u => u.HeightInches >= minHeight);
+            if (me.PrefMaxHeightInches is { } maxHeight) people = people.Where(u => u.HeightInches <= maxHeight);
+            if (me.PreferredEthnicities() is { Count: > 0 } wanted)
+            {
+                var ethnicities = wanted.Cast<Ethnicity?>().ToArray();
+                people = people.Where(u => ethnicities.Contains(u.Ethnicity));
+            }
+            if (me.PrefMaxDistanceMiles is { } maxMiles)
+            {
+                // Flat-map distance in plain arithmetic, so it runs inside both SQLite and Postgres.
+                // Over a few hundred miles it's within a couple of percent of the real thing.
+                double myLat = me.Latitude!.Value, myLng = me.Longitude!.Value;
+                var milesPerDegreeLng = UsGeo.MilesPerDegree * Math.Cos(myLat * Math.PI / 180);
+                var maxSquared = (double)maxMiles * maxMiles;
+                people = people.Where(u =>
+                    (u.Latitude!.Value - myLat) * UsGeo.MilesPerDegree * ((u.Latitude!.Value - myLat) * UsGeo.MilesPerDegree)
+                    + (u.Longitude!.Value - myLng) * milesPerDegreeLng * ((u.Longitude!.Value - myLng) * milesPerDegreeLng)
+                    <= maxSquared);
+            }
+
+            var profiles = await people
                 .OrderBy(_ => EF.Functions.Random())
                 .Take(Math.Clamp(take ?? 20, 1, 50))
                 // Single query on purpose: a split query re-runs ORDER BY random() for the
@@ -46,16 +74,21 @@ public static class FeedEndpoints
                 .AsSingleQuery()
                 .ToListAsync();
 
-            return Results.Ok(profiles.Select(p => p.ToDto(req)));
+            return Results.Ok(profiles.Select(p => p.ToDtoFor(me, req)));
         });
 
-        g.MapPost("/swipes", async (SwipeRequest r, ClaimsPrincipal principal, SinDb db, IConfiguration config) =>
+        g.MapPost("/swipes", async (SwipeRequest r, ClaimsPrincipal principal, SinDb db, IConfiguration config, LocationBypass bypass) =>
         {
             var meId = principal.UserId();
             if (r.TargetUserId == meId) return Error("You can't swipe on yourself. We know you want to.");
 
+            // No matches with anyone outside the US: both people must have shared a US location.
+            var me = await db.Users.FirstOrDefaultAsync(u => u.Id == meId);
+            if (me is null) return Results.NotFound();
+            if (!await EnsureLocatedAsync(me, db, bypass)) return LocationRequired();
+
             var target = await db.Users.FirstOrDefaultAsync(u => u.Id == r.TargetUserId && !u.IsBanned);
-            if (target is null) return Results.NotFound();
+            if (target is null || !target.HasLocation) return Results.NotFound();
             if (await db.Blocks.AnyAsync(b => (b.BlockerId == meId && b.BlockedId == target.Id) || (b.BlockerId == target.Id && b.BlockedId == meId)))
                 return Results.NotFound();
 
@@ -95,5 +128,15 @@ public static class FeedEndpoints
             }
             return Results.Ok(new SwipeResult(match is not null, match?.Id));
         });
+    }
+
+    /// <summary>True if this person has a US location, giving bypassed (store reviewer) accounts one on the spot.</summary>
+    private static async Task<bool> EnsureLocatedAsync(User me, SinDb db, LocationBypass bypass)
+    {
+        if (me.HasLocation) return true;
+        if (!bypass.Covers(me)) return false;
+        bypass.Place(me);
+        await db.SaveChangesAsync();
+        return true;
     }
 }

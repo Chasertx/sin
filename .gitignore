@@ -499,4 +499,4 @@ src/Sin.Api/wwwroot/uploads/*
 demo/
 
 # Local dev database folder (mounted into the API container)
-data/
+/data/

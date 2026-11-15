@@ -4,13 +4,23 @@ import { Alert, Linking } from 'react-native';
 
 import MyProblems from '@/app/(app)/(tabs)/me';
 import { api, ApiError } from '@/lib/api';
+import { NO_FILTERS, filtersVersion } from '@/lib/filters';
 import type { Profile } from '@/lib/types';
 
 const mockSession = { signOut: jest.fn(), needsOnboarding: false, finishOnboarding: jest.fn() };
 jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
 jest.mock('@/lib/api', () => ({
   ...jest.requireActual('@/lib/api'),
-  api: { me: jest.fn(), addFlaw: jest.fn(), deleteFlaw: jest.fn(), updateMe: jest.fn(), uploadPhoto: jest.fn(), deleteAccount: jest.fn() },
+  api: {
+    me: jest.fn(),
+    addFlaw: jest.fn(),
+    deleteFlaw: jest.fn(),
+    updateMe: jest.fn(),
+    uploadPhoto: jest.fn(),
+    deleteAccount: jest.fn(),
+    preferences: jest.fn(),
+    savePreferences: jest.fn(),
+  },
 }));
 const mockedApi = api as jest.Mocked<typeof api>;
 
@@ -31,6 +41,7 @@ const fieldAfterLabel = (label: string) => screen.getByLabelText(label);
 
 beforeEach(() => {
   mockedApi.me.mockResolvedValue(profile());
+  mockedApi.preferences.mockResolvedValue(NO_FILTERS);
   mockSession.needsOnboarding = false;
 });
 
@@ -114,6 +125,8 @@ it('saves the basics after tapping the pencil, then goes back to the summary', a
     gender: 'Woman',
     interestedIn: 'Men',
     headline: null,
+    heightInches: null,
+    ethnicity: null,
   });
   expect(mockSession.finishOnboarding).toHaveBeenCalled();
   expect(await screen.findByText('Danielle, 29')).toBeTruthy();
@@ -249,5 +262,103 @@ describe('account', () => {
     await fireEvent.press(screen.getByText('Terms & community rules'));
     expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/privacy\.html$/));
     expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/terms\.html$/));
+  });
+});
+
+describe('height and ethnicity (optional)', () => {
+  const nudge = (label: string, actionName: 'increment' | 'decrement') =>
+    fireEvent(screen.getByLabelText(label), 'accessibilityAction', { nativeEvent: { actionName } });
+
+  it('shows them in the summary, or says they are not set', async () => {
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    expect(screen.getAllByText('Not set')).toHaveLength(2);
+
+    mockedApi.me.mockResolvedValue(profile({ heightInches: 67, ethnicity: 'HispanicLatino' }));
+    await screen.unmount();
+    await render(<MyProblems />);
+    expect(await screen.findByText('5\'7"')).toBeTruthy();
+    expect(screen.getByText('Hispanic / Latino')).toBeTruthy();
+  });
+
+  it('saves a height and an ethnicity', async () => {
+    mockedApi.updateMe.mockResolvedValue(profile({ heightInches: 67, ethnicity: 'Asian' }));
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await fireEvent.press(screen.getByLabelText('Edit the basics'));
+
+    await nudge('Your height', 'increment'); // 5'6" is where the slider starts
+    await fireEvent.press(screen.getByText('Black'));
+    await fireEvent.press(screen.getByText('Asian')); // one at a time: this replaces Black
+    await fireEvent.press(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockedApi.updateMe).toHaveBeenCalledWith(expect.objectContaining({ heightInches: 67, ethnicity: 'Asian' })));
+  });
+
+  it('lets you take both back off', async () => {
+    mockedApi.me.mockResolvedValue(profile({ heightInches: 70, ethnicity: 'White' }));
+    mockedApi.updateMe.mockResolvedValue(profile());
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await fireEvent.press(screen.getByLabelText('Edit the basics'));
+
+    await fireEvent.press(screen.getByLabelText('Clear height'));
+    await fireEvent.press(screen.getByText('White'));
+    await fireEvent.press(screen.getByText('Save'));
+
+    await waitFor(() => expect(mockedApi.updateMe).toHaveBeenCalledWith(expect.objectContaining({ heightInches: null, ethnicity: null })));
+  });
+});
+
+describe('who you want to see', () => {
+  it('summarises the filters in force', async () => {
+    mockedApi.preferences.mockResolvedValue({
+      minAge: 25,
+      maxAge: 38,
+      maxDistanceMiles: 50,
+      minHeightInches: 66,
+      maxHeightInches: null,
+      ethnicities: ['Asian', 'Black'],
+    });
+    await render(<MyProblems />);
+    expect(await screen.findByText('25 – 38')).toBeTruthy();
+    expect(screen.getByText('Within 50 miles')).toBeTruthy();
+    expect(screen.getByText('5\'6" and up')).toBeTruthy();
+    expect(screen.getByText('2 selected')).toBeTruthy();
+  });
+
+  it('starts wide open', async () => {
+    await render(<MyProblems />);
+    expect(await screen.findByText('Any age')).toBeTruthy();
+    expect(screen.getByText('Anywhere in the US')).toBeTruthy();
+    expect(screen.getByText('Any height')).toBeTruthy();
+    expect(screen.getByText('Any ethnicity')).toBeTruthy();
+  });
+
+  it('edits them in a sheet, saves, and tells Discover to reload', async () => {
+    const saved = { ...NO_FILTERS, ethnicities: ['MiddleEastern' as const] };
+    mockedApi.savePreferences.mockResolvedValue(saved);
+    const before = filtersVersion();
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+
+    await fireEvent.press(screen.getByLabelText('Edit who you want to see'));
+    await fireEvent.press(await screen.findByText('Middle Eastern'));
+    await fireEvent.press(screen.getByText('Save filters'));
+
+    await waitFor(() => expect(mockedApi.savePreferences).toHaveBeenCalledWith(saved));
+    expect(await screen.findByText('1 selected')).toBeTruthy();
+    expect(screen.queryByText('Save filters')).toBeNull(); // sheet closed
+    expect(filtersVersion()).toBe(before + 1);
+  });
+
+  it('says why if saving fails and leaves the sheet open', async () => {
+    mockedApi.savePreferences.mockRejectedValue(new ApiError("Can't connect right now.", 0));
+    await render(<MyProblems />);
+    await screen.findByText('Dana, 29');
+    await fireEvent.press(screen.getByLabelText('Edit who you want to see'));
+    await fireEvent.press(await screen.findByText('Save filters'));
+    await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Hmm', "Can't connect right now."));
+    expect(screen.getByText('Save filters')).toBeTruthy();
   });
 });

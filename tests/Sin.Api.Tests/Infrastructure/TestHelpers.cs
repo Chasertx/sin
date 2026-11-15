@@ -48,7 +48,14 @@ public static class TestHelpers
         return new MultipartFormDataContent { { file, "file", "photo" } };
     }
 
-    /// <summary>Registers a user through the API and returns a client that's signed in as them.</summary>
+    /// <summary>Where test users live unless a test says otherwise.</summary>
+    public static readonly LocationRequest NewYork = new(40.7128, -74.0060, "US");
+    public static readonly LocationRequest Philadelphia = new(39.9526, -75.1652, "US"); // about 80 miles from New York
+    public static readonly LocationRequest LosAngeles = new(34.0522, -118.2437, "US");
+    public static readonly LocationRequest Toronto = new(43.6532, -79.3832, "CA");
+    public static readonly LocationRequest London = new(51.5074, -0.1278, "GB");
+
+    /// <summary>Registers a user through the API, in New York, and returns a client that's signed in as them.</summary>
     public static async Task<TestUser> CreateUserAsync(
         this ApiFactory factory,
         string? name = null,
@@ -57,8 +64,29 @@ public static class TestHelpers
         int age = 30,
         params string[] flaws)
     {
+        var user = await factory.CreateUnlocatedUserAsync(name, gender, interestedIn, age, flaws: flaws);
+        await user.LocateAsync(NewYork);
+        return user;
+    }
+
+    public static async Task LocateAsync(this TestUser user, LocationRequest where)
+    {
+        var res = await user.Client.PutAsJsonAsync("/api/me/location", where, Json);
+        Assert.True(res.IsSuccessStatusCode, $"set location failed: {res.StatusCode} {await res.Content.ReadAsStringAsync()}");
+    }
+
+    /// <summary>A user who has never shared a location: registered, but not let into Discover.</summary>
+    public static async Task<TestUser> CreateUnlocatedUserAsync(
+        this ApiFactory factory,
+        string? name = null,
+        Gender gender = Gender.Woman,
+        InterestedIn interestedIn = InterestedIn.Everyone,
+        int age = 30,
+        string? email = null,
+        params string[] flaws)
+    {
         name ??= "User" + Random.Shared.Next(1000, 9999);
-        var email = UniqueEmail(name.ToLowerInvariant());
+        email ??= UniqueEmail(name.ToLowerInvariant());
         const string password = "password123";
 
         var anon = factory.CreateClient();
@@ -106,6 +134,23 @@ public static class TestHelpers
         Assert.True(res.StatusCode == expected, $"expected {(int)expected}, got {(int)res.StatusCode}: {body}");
         return JsonSerializer.Deserialize<ErrorResponse>(body, Json)?.Error ?? "";
     }
+
+    /// <summary>The machine-readable code of a 403 (e.g. "location_required").</summary>
+    public static async Task<string?> ErrorCodeAsync(this HttpResponseMessage res)
+    {
+        var body = await res.Content.ReadAsStringAsync();
+        Assert.True(res.StatusCode == HttpStatusCode.Forbidden, $"expected 403, got {(int)res.StatusCode}: {body}");
+        return JsonSerializer.Deserialize<ErrorResponse>(body, Json)?.Code;
+    }
+
+    public static async Task<PreferencesDto> SetPreferencesAsync(this TestUser u, PreferencesDto prefs) =>
+        await (await u.Client.PutAsJsonAsync("/api/me/preferences", prefs, Json)).ReadAsync<PreferencesDto>();
+
+    /// <summary>Fills in the optional profile details straight in the database.</summary>
+    public static Task DescribeAsync(this ApiFactory factory, TestUser user, int? height = null, Ethnicity? ethnicity = null) =>
+        factory.WithDbAsync(db => db.Users.Where(u => u.Id == user.Id).ExecuteUpdateAsync(s => s
+            .SetProperty(u => u.HeightInches, height)
+            .SetProperty(u => u.Ethnicity, ethnicity)));
 
     public static Task<HttpResponseMessage> PostJsonAsync<T>(this HttpClient c, string url, T body) => c.PostAsJsonAsync(url, body, Json);
     public static Task<HttpResponseMessage> PutJsonAsync<T>(this HttpClient c, string url, T body) => c.PutAsJsonAsync(url, body, Json);

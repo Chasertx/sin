@@ -21,8 +21,30 @@ public class User
     public bool IsBanned { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public int? HeightInches { get; set; }
+    public Ethnicity? Ethnicity { get; set; }
+
+    /// <summary>
+    /// Last location the phone shared, rounded to about a mile. Only ever set to a point inside the
+    /// United States, so "has a location" also means "confirmed in the US". Never sent to anyone.
+    /// </summary>
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public DateTime? LocatedAt { get; set; }
+
+    // Discover filters: who this person wants to see. Null means no limit.
+    public int? PrefMinAge { get; set; }
+    public int? PrefMaxAge { get; set; }
+    public int? PrefMaxDistanceMiles { get; set; }
+    public int? PrefMinHeightInches { get; set; }
+    public int? PrefMaxHeightInches { get; set; }
+    /// <summary>Comma-separated <see cref="Sin.Shared.Ethnicity"/> names; null means everyone.</summary>
+    public string? PrefEthnicities { get; set; }
+
     public List<Flaw> Flaws { get; set; } = [];
     public List<ExternalLogin> ExternalLogins { get; set; } = [];
+
+    public bool HasLocation => Latitude is not null && Longitude is not null;
 
     /// <summary>SSO users start with Age = 0 until they fill in their profile.</summary>
     public bool NeedsOnboarding => Age < 18;

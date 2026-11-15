@@ -16,7 +16,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { categoryMeta, colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
+import { avatarColors, categoryMeta, colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
 import type { FlawCategory } from '@/lib/types';
 
 // ---------- Text ----------
@@ -114,6 +114,8 @@ export function Chip({
         Haptics.selectionAsync().catch(() => {});
         onPress?.();
       }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!selected }}
       style={({ pressed }) => [
         styles.chip,
         selected ? { backgroundColor: color, borderColor: color } : { borderColor: tint(color, 0.3) },
@@ -151,6 +153,43 @@ export function ChipGroup<T extends string>({
   );
 }
 
+/** Chips where any number can be on at once (or none). */
+export function MultiChipGroup<T extends string>({
+  options,
+  values,
+  onChange,
+  label,
+  render = (o) => o,
+  color = colors.primary,
+}: {
+  options: readonly T[];
+  values: readonly T[];
+  onChange: (v: T[]) => void;
+  label?: string;
+  render?: (o: T) => string;
+  color?: string;
+}) {
+  return (
+    <View style={{ gap: 8 }}>
+      {label ? <Txt variant="label">{label}</Txt> : null}
+      <View style={styles.chipRow}>
+        {options.map((o) => {
+          const on = values.includes(o);
+          return (
+            <Chip
+              key={o}
+              label={render(o)}
+              selected={on}
+              color={color}
+              onPress={() => onChange(on ? values.filter((v) => v !== o) : [...values, o])}
+            />
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export function CategoryTag({ category }: { category: FlawCategory }) {
   const m = categoryMeta[category];
   return (
@@ -166,8 +205,6 @@ export function CategoryTag({ category }: { category: FlawCategory }) {
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, shadow, style]}>{children}</View>;
 }
-
-const avatarColors = [colors.coral, colors.deep, colors.sky, colors.mint, colors.primary, colors.sunshine];
 
 export function Avatar({ name, uri, size = 56 }: { name: string; uri?: string | null; size?: number }) {
   // Hash the whole name so people with different names rarely share a color.

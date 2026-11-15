@@ -146,7 +146,10 @@ describe('requests', () => {
     ['block', () => m.api.block('u9'), 'POST', '/api/users/u9/block', undefined],
     ['report', () => m.api.report('u9', 'Spam', 'crypto pitch'), 'POST', '/api/users/u9/report', { reason: 'Spam', details: 'crypto pitch' }],
     ['deleteAccount', () => m.api.deleteAccount(), 'DELETE', '/api/me', undefined],
-    ['updateMe', () => m.api.updateMe({ displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null }), 'PUT', '/api/me', { displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null }],
+    ['updateMe', () => m.api.updateMe({ displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null, heightInches: 67, ethnicity: 'Asian' }), 'PUT', '/api/me', { displayName: 'A', age: 30, gender: 'Woman', interestedIn: 'Men', headline: null, heightInches: 67, ethnicity: 'Asian' }],
+    ['setLocation', () => m.api.setLocation(40.71, -74.01, 'US'), 'PUT', '/api/me/location', { latitude: 40.71, longitude: -74.01, countryCode: 'US' }],
+    ['preferences', () => m.api.preferences(), 'GET', '/api/me/preferences', undefined],
+    ['savePreferences', () => m.api.savePreferences({ minAge: 25, maxAge: 40, maxDistanceMiles: 50, minHeightInches: null, maxHeightInches: 72, ethnicities: ['Black'] }), 'PUT', '/api/me/preferences', { minAge: 25, maxAge: 40, maxDistanceMiles: 50, minHeightInches: null, maxHeightInches: 72, ethnicities: ['Black'] }],
     ['register', () => m.api.register({ email: 'e', password: 'p', displayName: 'n', age: 20, gender: 'Man', interestedIn: 'Everyone' }), 'POST', '/api/auth/register', { email: 'e', password: 'p', displayName: 'n', age: 20, gender: 'Man', interestedIn: 'Everyone' }],
   ])('%s hits the right endpoint', async (_name, call, method, path, body) => {
     fetchMock.mockReturnValueOnce(respond(200, {}));

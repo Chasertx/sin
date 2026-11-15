@@ -4,6 +4,21 @@ public enum Gender { Man, Woman, NonBinary }
 
 public enum InterestedIn { Men, Women, Everyone }
 
+/// <summary>Optional, self-described. Only used so people can filter who they see.</summary>
+public enum Ethnicity
+{
+    Asian,
+    Black,
+    HispanicLatino,
+    MiddleEastern,
+    Multiracial,
+    NativeAmerican,
+    PacificIslander,
+    SouthAsian,
+    White,
+    Other
+}
+
 public enum ReportReason
 {
     Harassment,

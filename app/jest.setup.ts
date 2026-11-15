@@ -27,6 +27,7 @@ jest.mock('react-native-reanimated', () => {
     },
     Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     ZoomIn: chain,
+    SlideInDown: chain,
     FadeInDown: chain,
     FadeOut: chain,
     LinearTransition: chain,
@@ -88,6 +89,20 @@ jest.mock('expo-file-system', () => ({
 jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
 }));
+
+// Location: a phone in New York that has already said yes. Tests override these to play other phones.
+jest.mock('expo-location', () => {
+  const granted = { granted: true, canAskAgain: true, status: 'granted' };
+  const newYork = { coords: { latitude: 40.7128, longitude: -74.006 } };
+  return {
+    getForegroundPermissionsAsync: jest.fn(async () => granted),
+    requestForegroundPermissionsAsync: jest.fn(async () => granted),
+    getLastKnownPositionAsync: jest.fn(async () => newYork),
+    getCurrentPositionAsync: jest.fn(async () => newYork),
+    reverseGeocodeAsync: jest.fn(async () => [{ isoCountryCode: 'US' }]),
+    Accuracy: { Lowest: 1, Low: 2, Balanced: 3, High: 4 },
+  };
+});
 
 jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { hostUri: '192.168.1.50:8081' } } }));
 

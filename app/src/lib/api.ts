@@ -4,12 +4,14 @@ import { Platform } from 'react-native';
 
 import type {
   AuthResponse,
+  Ethnicity,
   Flaw,
   FlawCategory,
   Gender,
   InterestedIn,
   Match,
   Message,
+  Preferences,
   Profile,
   ReportReason,
   SwipeResult,
@@ -34,7 +36,11 @@ export const PRIVACY_URL = `${API_URL}/privacy.html`;
 export const TERMS_URL = `${API_URL}/terms.html`;
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  /**
+   * @param code set when the app has to react to the error rather than just show it:
+   *             'location_required' or 'outside_us'.
+   */
+  constructor(message: string, public status: number, public code?: string) {
     super(message);
   }
 }
@@ -70,13 +76,15 @@ async function request<T>(method: string, path: string, body?: unknown, isForm =
   if (res.status === 401 && authToken) onUnauthorized?.();
   if (!res.ok) {
     let message = `Something went wrong (${res.status}).`;
+    let code: string | undefined;
     try {
       const data = await res.json();
       if (data?.error) message = data.error;
+      if (data?.code) code = data.code;
     } catch {
       // not JSON
     }
-    throw new ApiError(message, res.status);
+    throw new ApiError(message, res.status, code);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
@@ -99,8 +107,20 @@ export const api = {
 
   // me
   me: () => request<Profile>('GET', '/api/me'),
-  updateMe: (p: { displayName: string; age: number; gender: Gender; interestedIn: InterestedIn; headline: string | null }) =>
-    request<Profile>('PUT', '/api/me', p),
+  updateMe: (p: {
+    displayName: string;
+    age: number;
+    gender: Gender;
+    interestedIn: InterestedIn;
+    headline: string | null;
+    heightInches: number | null;
+    ethnicity: Ethnicity | null;
+  }) => request<Profile>('PUT', '/api/me', p),
+  /** Where this phone is. The server only accepts places inside the United States. */
+  setLocation: (latitude: number, longitude: number, countryCode: string | null) =>
+    request<void>('PUT', '/api/me/location', { latitude, longitude, countryCode }),
+  preferences: () => request<Preferences>('GET', '/api/me/preferences'),
+  savePreferences: (p: Preferences) => request<Preferences>('PUT', '/api/me/preferences', p),
   addFlaw: (category: FlawCategory, text: string) => request<Flaw>('POST', '/api/me/flaws', { category, text }),
   deleteFlaw: (id: string) => request<void>('DELETE', `/api/me/flaws/${id}`),
   /**

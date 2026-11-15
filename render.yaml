@@ -34,6 +34,10 @@ services:
       # (console.anthropic.com > API keys). Without it nothing is screened.
       - key: Moderation__ApiKey
         sync: false
+      # Accounts that skip the US-only location check, comma-separated. Put the App Store / Google Play
+      # reviewers' test login here: reviewers are often outside the US or have location switched off.
+      - key: Location__BypassEmails
+        sync: false
       # Demo users are for local development only.
       - key: Demo__SeedUsers
         value: "false"

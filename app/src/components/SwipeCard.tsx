@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +17,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { CategoryTag, Txt } from '@/components/ui';
 import { colors, fonts, radius, shadow, brand, tint } from '@/lib/theme';
-import type { Profile } from '@/lib/types';
+import { formatHeight, type Profile } from '@/lib/types';
 
 export interface SwipeCardHandle {
   swipe: (canHandleIt: boolean) => void;
@@ -116,7 +117,19 @@ export function PeekCard({ profile }: { profile: Profile }) {
   );
 }
 
+/** "12 miles away · 5'7"": whichever of the two this person has. */
+export function cardDetails(profile: Profile) {
+  const { distanceMiles, heightInches } = profile;
+  return [
+    distanceMiles == null ? null : distanceMiles <= 1 ? 'Nearby' : `${distanceMiles} miles away`,
+    heightInches == null ? null : formatHeight(heightInches),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
+  const details = cardDetails(profile);
   return (
     <>
       <View style={styles.photo}>
@@ -131,12 +144,20 @@ function CardBody({ profile, extra }: { profile: Profile; extra: number }) {
           </LinearGradient>
         )}
         <LinearGradient colors={['transparent', 'rgba(8,24,19,0.75)']} style={styles.photoShade} />
-        <View style={styles.nameRow}>
-          <Text style={styles.name}>{profile.displayName}</Text>
-          <Text style={styles.age}>{profile.age}</Text>
-          {extra > 0 ? (
-            <View style={styles.more}>
-              <Text style={styles.moreText}>+ {extra} more confession{extra > 1 ? 's' : ''}</Text>
+        <View style={styles.nameBlock}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{profile.displayName}</Text>
+            <Text style={styles.age}>{profile.age}</Text>
+            {extra > 0 ? (
+              <View style={styles.more}>
+                <Text style={styles.moreText}>+ {extra} more confession{extra > 1 ? 's' : ''}</Text>
+              </View>
+            ) : null}
+          </View>
+          {details ? (
+            <View style={styles.detailsRow}>
+              <Ionicons name="location" size={14} color={tint(colors.white, 0.9)} />
+              <Text style={styles.details}>{details}</Text>
             </View>
           ) : null}
         </View>
@@ -175,14 +196,17 @@ const styles = StyleSheet.create({
   noPhotoInitial: { fontFamily: fonts.black, fontSize: 84, color: tint(colors.white, 0.9) },
   noPhotoCaption: { fontFamily: fonts.bold, fontSize: 13, color: tint(colors.white, 0.9) },
   photoShade: { ...StyleSheet.absoluteFill, top: '45%' },
-  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, padding: 20 },
+  nameBlock: { padding: 20, gap: 2 },
+  nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+  detailsRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  details: { fontFamily: fonts.bold, fontSize: 14, color: tint(colors.white, 0.9) },
   name: { fontFamily: fonts.black, fontSize: 34, color: colors.white, flexShrink: 1 },
   age: { fontFamily: fonts.bold, fontSize: 24, color: tint(colors.white, 0.85) },
   more: { marginLeft: 'auto', alignSelf: 'center', backgroundColor: tint(colors.white, 0.22), borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
   moreText: { fontFamily: fonts.heavy, fontSize: 12, color: colors.white },
   body: { flex: 1, padding: 18, gap: 10 },
-  headline: { backgroundColor: tint(colors.sunshine, 0.18), borderRadius: radius.md, padding: 12 },
-  headlineText: { fontFamily: fonts.heavy, fontSize: 16, color: '#8A5A00' },
+  headline: { backgroundColor: tint(colors.primary, 0.1), borderRadius: radius.md, padding: 12, borderLeftWidth: 4, borderLeftColor: colors.primary },
+  headlineText: { fontFamily: fonts.heavy, fontSize: 16, color: colors.primary },
   flaw: { gap: 6, backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: 12 },
   flawText: { fontSize: 15, lineHeight: 21 },
   stamp: { position: 'absolute', top: 36, borderWidth: 4, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },

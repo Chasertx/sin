@@ -8,21 +8,39 @@ import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, 
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, CategoryTag, ChipGroup, Field, Txt } from '@/components/ui';
+import { FilterSheet } from '@/components/FilterSheet';
+import { RangeSlider } from '@/components/RangeSlider';
+import { Button, Card, CategoryTag, ChipGroup, Field, MultiChipGroup, Txt } from '@/components/ui';
 import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
+import {
+  NO_FILTERS,
+  describeAge,
+  describeDistance,
+  describeEthnicities,
+  describeHeight,
+  markFiltersChanged,
+} from '@/lib/filters';
 import { useSession } from '@/lib/session';
 import { categoryMeta, colors, fonts, radius, brand, tint } from '@/lib/theme';
 import {
   CATEGORIES,
+  ETHNICITIES,
   GENDERS,
   INTERESTS,
   LIMITS,
+  ethnicityLabel,
+  formatHeight,
   genderLabel,
+  type Ethnicity,
   type FlawCategory,
   type Gender,
   type InterestedIn,
+  type Preferences,
   type Profile,
 } from '@/lib/types';
+
+/** What the height slider on the profile can reach: 4'0" to 7'6". */
+const HEIGHT_SLIDER = { min: LIMITS.minHeight, max: 90, start: 66 } as const;
 
 export default function MyProblems() {
   const insets = useSafeAreaInsets();
@@ -40,6 +58,12 @@ export default function MyProblems() {
   const [headline, setHeadline] = useState('');
   const [gender, setGender] = useState<Gender>('Woman');
   const [interestedIn, setInterestedIn] = useState<InterestedIn>('Everyone');
+  // optional extras: both can be left empty
+  const [height, setHeight] = useState<number | null>(null);
+  const [ethnicity, setEthnicity] = useState<Ethnicity | null>(null);
+  // who you want to see in Discover
+  const [filters, setFilters] = useState<Preferences>(NO_FILTERS);
+  const [filtering, setFiltering] = useState(false);
 
   const apply = (p: Profile) => {
     setProfile(p);
@@ -48,12 +72,15 @@ export default function MyProblems() {
     setHeadline(p.headline ?? '');
     setGender(p.gender);
     setInterestedIn(p.interestedIn);
+    setHeight(p.heightInches ?? null);
+    setEthnicity(p.ethnicity ?? null);
     if (p.age < 18) setEditing(true); // nothing saved yet: go straight to the form
   };
 
   useFocusEffect(
     useCallback(() => {
       api.me().then(apply).catch(() => {});
+      api.preferences().then(setFilters).catch(() => {});
     }, []),
   );
 
@@ -94,11 +121,31 @@ export default function MyProblems() {
     run('save', async () => {
       const ageNum = parseInt(age, 10);
       if (!ageNum) throw new ApiError('Pop your age in as a number.', 400);
-      apply(await api.updateMe({ displayName: name.trim(), age: ageNum, gender, interestedIn, headline: headline.trim() || null }));
+      apply(
+        await api.updateMe({
+          displayName: name.trim(),
+          age: ageNum,
+          gender,
+          interestedIn,
+          headline: headline.trim() || null,
+          heightInches: height,
+          ethnicity,
+        }),
+      );
       finishOnboarding();
       setEditing(false);
       Alert.alert('Saved ✨', 'Your problems are up to date.');
     });
+
+  const saveFilters = async (next: Preferences) => {
+    try {
+      setFilters(await api.savePreferences(next));
+      markFiltersChanged(); // Discover reloads with the new filters next time it's opened
+      setFiltering(false);
+    } catch (e) {
+      Alert.alert('Hmm', e instanceof ApiError ? e.message : String(e));
+    }
+  };
 
   const pickPhoto = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
@@ -164,7 +211,7 @@ export default function MyProblems() {
 
         <View style={styles.content}>
           {needsOnboarding || (profile && profile.age < 18) ? (
-            <View style={[styles.banner, { backgroundColor: '#FFF1CC' }]}>
+            <View style={[styles.banner, { backgroundColor: tint(colors.mint, 0.22) }]}>
               <Txt variant="heading">👋 Almost there</Txt>
               <Txt style={{ color: colors.inkSoft }}>Add your age and who you're into below, then confess something.</Txt>
             </View>
@@ -255,6 +302,43 @@ export default function MyProblems() {
                 />
                 <ChipGroup label="I am" options={GENDERS} value={gender} onChange={setGender} render={genderLabel} colorFor={() => colors.deep} />
                 <ChipGroup label="Into" options={INTERESTS} value={interestedIn} onChange={setInterestedIn} colorFor={() => colors.primary} />
+
+                <View style={{ gap: 2 }}>
+                  <View style={styles.heightHead}>
+                    <Txt variant="label" style={{ flex: 1 }}>
+                      Height (optional)
+                    </Txt>
+                    <Txt style={[styles.heightValue, height === null && { color: colors.muted }]}>
+                      {height === null ? 'Not set' : formatHeight(height)}
+                    </Txt>
+                    {height !== null ? (
+                      <Pressable onPress={() => setHeight(null)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear height">
+                        <Ionicons name="close-circle" size={20} color={colors.muted} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <RangeSlider
+                    min={HEIGHT_SLIDER.min}
+                    max={HEIGHT_SLIDER.max}
+                    values={[height ?? HEIGHT_SLIDER.start]}
+                    onChange={([v]) => setHeight(v)}
+                    labels={['Your height']}
+                    format={formatHeight}
+                    dimmed={height === null}
+                  />
+                </View>
+
+                <MultiChipGroup
+                  label="Race / ethnicity (optional)"
+                  options={ETHNICITIES}
+                  values={ethnicity ? [ethnicity] : []}
+                  onChange={(picked) => setEthnicity(picked.at(-1) ?? null)}
+                  render={ethnicityLabel}
+                />
+                <Txt variant="caption">
+                  Not shown on your profile. It's only used when someone filters who they see.
+                </Txt>
+
                 <Button title="Save" variant="dark" onPress={save} loading={busy === 'save'} />
                 {ageLocked && profile ? (
                   <Button
@@ -274,8 +358,29 @@ export default function MyProblems() {
                 <BasicsRow label="Headline" value={profile.headline ?? 'None yet'} muted={!profile.headline} />
                 <BasicsRow label="I am" value={genderLabel(profile.gender)} />
                 <BasicsRow label="Into" value={profile.interestedIn} />
+                <BasicsRow label="Height" value={profile.heightInches ? formatHeight(profile.heightInches) : 'Not set'} muted={!profile.heightInches} />
+                <BasicsRow label="Ethnicity" value={profile.ethnicity ? ethnicityLabel(profile.ethnicity) : 'Not set'} muted={!profile.ethnicity} />
               </View>
             ) : null}
+          </Card>
+
+          {/* Filters */}
+          <Card style={{ gap: 14, marginTop: 8 }}>
+            <View style={styles.basicsHead}>
+              <View style={{ flex: 1 }}>
+                <Txt variant="heading">Who you want to see</Txt>
+                <Txt variant="caption">Discover only shows you people who fit.</Txt>
+              </View>
+              <Pressable onPress={() => setFiltering(true)} hitSlop={12} style={styles.pencil} accessibilityRole="button" accessibilityLabel="Edit who you want to see">
+                <Ionicons name="options" size={15} color={colors.deep} />
+              </Pressable>
+            </View>
+            <View style={{ gap: 12 }}>
+              <BasicsRow label="Age" value={describeAge(filters)} />
+              <BasicsRow label="Distance" value={describeDistance(filters)} />
+              <BasicsRow label="Height" value={describeHeight(filters)} />
+              <BasicsRow label="Ethnicity" value={describeEthnicities(filters)} />
+            </View>
           </Card>
 
           {/* Account */}
@@ -298,6 +403,7 @@ export default function MyProblems() {
           </Card>
         </View>
       </ScrollView>
+      <FilterSheet visible={filtering} current={filters} onClose={() => setFiltering(false)} onApply={saveFilters} />
     </KeyboardAvoidingView>
   );
 }
@@ -317,6 +423,8 @@ const styles = StyleSheet.create({
   basicsHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pencil: { width: 30, height: 30, borderRadius: 15, backgroundColor: tint(colors.deep, 0.12), alignItems: 'center', justifyContent: 'center' },
   basicsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  heightHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heightValue: { fontFamily: fonts.heavy, color: colors.primary },
   hero: { alignItems: 'center', paddingBottom: 28, borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 20, marginBottom: 18 },
   heroTitle: { fontFamily: fonts.black, fontSize: 28, color: colors.white },

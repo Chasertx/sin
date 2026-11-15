@@ -39,6 +39,49 @@ export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
 
 export const genderLabel = (g: Gender) => (g === 'NonBinary' ? 'Non-binary' : g);
 
+/** Optional and self-described. Never shown on a profile; only used for filtering. */
+export type Ethnicity =
+  | 'Asian'
+  | 'Black'
+  | 'HispanicLatino'
+  | 'MiddleEastern'
+  | 'Multiracial'
+  | 'NativeAmerican'
+  | 'PacificIslander'
+  | 'SouthAsian'
+  | 'White'
+  | 'Other';
+
+export const ETHNICITIES: Ethnicity[] = [
+  'Asian',
+  'Black',
+  'HispanicLatino',
+  'MiddleEastern',
+  'Multiracial',
+  'NativeAmerican',
+  'PacificIslander',
+  'SouthAsian',
+  'White',
+  'Other',
+];
+
+const ethnicityLabels: Record<Ethnicity, string> = {
+  Asian: 'Asian',
+  Black: 'Black',
+  HispanicLatino: 'Hispanic / Latino',
+  MiddleEastern: 'Middle Eastern',
+  Multiracial: 'Multiracial',
+  NativeAmerican: 'Native American',
+  PacificIslander: 'Pacific Islander',
+  SouthAsian: 'South Asian',
+  White: 'White',
+  Other: 'Other',
+};
+export const ethnicityLabel = (e: Ethnicity) => ethnicityLabels[e];
+
+/** 67 → 5'7" */
+export const formatHeight = (inches: number) => `${Math.floor(inches / 12)}'${inches % 12}"`;
+
 export interface AuthResponse {
   token: string;
   userId: string;
@@ -61,6 +104,21 @@ export interface Profile {
   headline: string | null;
   photoUrl: string | null;
   flaws: Flaw[];
+  heightInches?: number | null;
+  /** Only ever present on your own profile. */
+  ethnicity?: Ethnicity | null;
+  /** How far away this person is. Not present on your own profile. */
+  distanceMiles?: number | null;
+}
+
+/** Discover filters. A null bound means no limit; an empty ethnicity list means everyone. */
+export interface Preferences {
+  minAge: number;
+  maxAge: number | null;
+  maxDistanceMiles: number | null;
+  minHeightInches: number | null;
+  maxHeightInches: number | null;
+  ethnicities: Ethnicity[];
 }
 
 export interface SwipeResult {
@@ -90,4 +148,6 @@ export const LIMITS = {
   headlineMax: 140,
   messageMax: 1000,
   reportDetailsMax: 1000,
+  minHeight: 48,
+  maxHeight: 96,
 } as const;

@@ -3,17 +3,56 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FilterSheet } from '@/components/FilterSheet';
 import { SafetySheet } from '@/components/SafetySheet';
 import { PeekCard, SwipeCard, type SwipeCardHandle } from '@/components/SwipeCard';
 import { Avatar, Button, Txt } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
+import { NO_FILTERS, activeFilterCount, filtersVersion } from '@/lib/filters';
+import { shareLocation } from '@/lib/location';
 import { useSession } from '@/lib/session';
 import { colors, coralish, fonts, minty, radius, shadow, brand, tint } from '@/lib/theme';
-import type { Profile } from '@/lib/types';
+import type { Preferences, Profile } from '@/lib/types';
+
+/**
+ * Why Discover is closed. Ick is US-only, so nobody browses until the phone has shared a US location.
+ * - ask: we need permission (or haven't asked yet)
+ * - blocked: location is switched off for Ick in the phone's settings
+ * - outside: the phone is outside the United States
+ * - unavailable: allowed, but no position came back
+ */
+type Gate = 'ask' | 'blocked' | 'outside' | 'unavailable';
+
+const gates: Record<Gate, { emoji: string; title: string; text: string; action: string }> = {
+  ask: {
+    emoji: '📍',
+    title: 'Where are you?',
+    text: "Ick is only for people in the United States, and shows you who's nearby. Your exact location stays private: other people only ever see how far away you are.",
+    action: 'Share my location',
+  },
+  blocked: {
+    emoji: '📍',
+    title: 'Location is switched off',
+    text: "Ick needs your location to check you're in the United States. Turn it on for Ick in your phone's settings, then come back.",
+    action: 'Open settings',
+  },
+  outside: {
+    emoji: '🌎',
+    title: "Ick isn't here yet",
+    text: 'Right now Ick only works in the United States.',
+    action: 'Check again',
+  },
+  unavailable: {
+    emoji: '🛰️',
+    title: "We couldn't find you",
+    text: "Make sure location is turned on and you're online, then try again.",
+    action: 'Try again',
+  },
+};
 
 export default function Discover() {
   const insets = useSafeAreaInsets();
@@ -23,30 +62,82 @@ export default function Discover() {
   const [error, setError] = useState<string | null>(null);
   const [match, setMatch] = useState<{ profile: Profile; matchId: string } | null>(null);
   const [reporting, setReporting] = useState<Profile | null>(null);
+  const [gate, setGate] = useState<Gate | null>(null);
+  const [filters, setFilters] = useState<Preferences>(NO_FILTERS);
+  const [filtering, setFiltering] = useState(false);
   const cardRef = useRef<SwipeCardHandle>(null);
   const loadedFor = useRef<string | null>(null);
+  const loadedFilters = useRef(0);
 
-  const refill = useCallback(async () => {
+  /** @param ifLocationNeeded which gate to show if the server says it has no location for us. */
+  const refill = useCallback(async (ifLocationNeeded: Gate = 'ask') => {
     setLoading(true);
     setError(null);
     try {
       const fresh = await api.feed();
+      setGate(null);
       setQueue((q) => [...q, ...fresh.filter((p) => !q.some((x) => x.id === p.id))]);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : String(e));
+      if (e instanceof ApiError && e.code === 'location_required') setGate(ifLocationNeeded);
+      else setError(e instanceof ApiError ? e.message : String(e));
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /** Opening Discover: quietly refresh our location if we're already allowed to, then load people. */
+  const start = useCallback(async () => {
+    setQueue([]);
+    setGate(null);
+    setLoading(true);
+    api.preferences().then(setFilters).catch(() => {});
+    const outcome = await shareLocation({ ask: false });
+    if (outcome === 'outside') {
+      setGate('outside');
+      setLoading(false);
+      return;
+    }
+    await refill(outcome === 'ok' || outcome === 'needs-permission' ? 'ask' : outcome);
+  }, [refill]);
+
+  /** The button on the gate: ask for location (or send them to settings) and try again. */
+  const openGate = async () => {
+    if (gate === 'blocked') {
+      Linking.openSettings().catch(() => {});
+      return;
+    }
+    setLoading(true);
+    const outcome = await shareLocation({ ask: true });
+    if (outcome === 'ok') return refill();
+    setGate(outcome === 'needs-permission' ? 'ask' : outcome);
+    setLoading(false);
+  };
+
+  const applyFilters = async (next: Preferences) => {
+    try {
+      setFilters(await api.savePreferences(next));
+      setFiltering(false);
+      setQueue([]);
+      await refill();
+    } catch (e) {
+      Alert.alert('Hmm', e instanceof ApiError ? e.message : String(e));
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (loadedFor.current !== session?.userId) {
         loadedFor.current = session?.userId ?? null;
+        loadedFilters.current = filtersVersion();
+        void start();
+      } else if (loadedFilters.current !== filtersVersion()) {
+        // The filters were changed on the Possibly Icks tab: the people already loaded no longer apply.
+        loadedFilters.current = filtersVersion();
         setQueue([]);
+        api.preferences().then(setFilters).catch(() => {});
         void refill();
       }
-    }, [session?.userId, refill]),
+    }, [session?.userId, start, refill]),
   );
 
   const onSwiped = useCallback(
@@ -69,6 +160,7 @@ export default function Discover() {
   );
 
   const [top, next] = queue;
+  const filterCount = activeFilterCount(filters);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 8 }]}>
@@ -83,7 +175,7 @@ export default function Discover() {
               <Ionicons name="flag-outline" size={19} color={colors.ink} />
             </Pressable>
           ) : null}
-          <Pressable onPress={refill} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Refresh">
+          <Pressable onPress={() => refill()} style={styles.iconBtn} hitSlop={8} accessibilityRole="button" accessibilityLabel="Refresh">
             <Ionicons name="refresh" size={20} color={colors.ink} />
           </Pressable>
         </View>
@@ -95,16 +187,49 @@ export default function Discover() {
           <SwipeCard key={top.id} ref={cardRef} profile={top} onSwiped={onSwiped} />
         ) : loading ? (
           <ActivityIndicator size="large" color={colors.primary} />
+        ) : gate ? (
+          <View style={styles.empty}>
+            <Text style={{ fontSize: 56 }}>{gates[gate].emoji}</Text>
+            <Txt variant="title" style={{ textAlign: 'center' }}>
+              {gates[gate].title}
+            </Txt>
+            <Txt style={{ color: colors.muted, textAlign: 'center' }}>{gates[gate].text}</Txt>
+            <Button title={gates[gate].action} onPress={openGate} style={{ alignSelf: 'stretch', marginTop: 8 }} />
+            {gate === 'blocked' ? (
+              <Pressable onPress={() => void start()} hitSlop={10} accessibilityRole="button">
+                <Text style={styles.textLink}>I've turned it on</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : error ? (
+          <View style={styles.empty}>
+            <Text style={{ fontSize: 56 }}>🔌</Text>
+            <Txt variant="title" style={{ textAlign: 'center' }}>
+              Lost the connection
+            </Txt>
+            <Txt style={{ color: colors.muted, textAlign: 'center' }}>{error}</Txt>
+            <Button title="Look again" onPress={() => refill()} style={{ alignSelf: 'stretch', marginTop: 8 }} />
+          </View>
+        ) : filterCount > 0 ? (
+          <View style={styles.empty}>
+            <Text style={{ fontSize: 56 }}>🔍</Text>
+            <Txt variant="title" style={{ textAlign: 'center' }}>
+              Nobody fits those filters yet
+            </Txt>
+            <Txt style={{ color: colors.muted, textAlign: 'center' }}>Widen them a little, or check back soon.</Txt>
+            <Button title="Change filters" onPress={() => setFiltering(true)} style={{ alignSelf: 'stretch', marginTop: 8 }} />
+            <Pressable onPress={() => refill()} hitSlop={10} accessibilityRole="button">
+              <Text style={styles.textLink}>Look again</Text>
+            </Pressable>
+          </View>
         ) : (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 56 }}>{error ? '🔌' : '🫠'}</Text>
+            <Text style={{ fontSize: 56 }}>🫠</Text>
             <Txt variant="title" style={{ textAlign: 'center' }}>
-              {error ? 'Lost the connection' : "You've seen everyone's problems"}
+              You've seen everyone's problems
             </Txt>
-            <Txt style={{ color: colors.muted, textAlign: 'center' }}>
-              {error ?? 'Fresh disasters arrive daily. Check back soon.'}
-            </Txt>
-            <Button title="Look again" onPress={refill} style={{ alignSelf: 'stretch', marginTop: 8 }} />
+            <Txt style={{ color: colors.muted, textAlign: 'center' }}>Fresh disasters arrive daily. Check back soon.</Txt>
+            <Button title="Look again" onPress={() => refill()} style={{ alignSelf: 'stretch', marginTop: 8 }} />
           </View>
         )}
       </View>
@@ -115,6 +240,8 @@ export default function Discover() {
           <ActionButton colors={minty} icon="heart" label="I can handle that" big onPress={() => cardRef.current?.swipe(true)} />
         </View>
       ) : null}
+
+      <FilterSheet visible={filtering} current={filters} onClose={() => setFiltering(false)} onApply={applyFilters} applyLabel="Show people" />
 
       <SafetySheet
         visible={!!reporting}
@@ -213,6 +340,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 },
   brand: { fontFamily: fonts.black, fontSize: 32, color: colors.primary, letterSpacing: -0.5 },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadow },
+  textLink: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, marginTop: 6 },
   deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },
   actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 48, paddingBottom: 14 },

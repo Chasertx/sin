@@ -2,7 +2,7 @@ import type { FlawCategory } from './types';
 
 /**
  * Palette taken from the logo: its mint-to-emerald green, white, and neutrals tinted the same green.
- * Coral stays for "no" and destructive actions, sunshine for highlights.
+ * The one colour that isn't green is coral, kept for "no" and for destructive actions.
  */
 export const colors = {
   bg: '#F2FBF7',
@@ -19,8 +19,6 @@ export const colors = {
   /** The logo's own green (also the icon and splash background in app.json). */
   mint: '#1EBA92',
   coral: '#FF5A5F',
-  sunshine: '#FFB938',
-  sky: '#3BA3FF',
   white: '#FFFFFF',
 } as const;
 
@@ -49,16 +47,23 @@ export const shadow = {
   elevation: 6,
 } as const;
 
+/**
+ * Confession categories are told apart by their emoji; the colours all stay in the logo's family,
+ * from teal through emerald to leaf green. Dealbreaker is the exception: a red flag is red.
+ */
 export const categoryMeta: Record<FlawCategory, { emoji: string; label: string; color: string }> = {
-  Habits: { emoji: '🔁', label: 'Habits', color: '#7B5CFF' },
-  Baggage: { emoji: '🧳', label: 'Baggage', color: colors.sky },
-  Hygiene: { emoji: '🧼', label: 'Hygiene', color: colors.mint },
-  Money: { emoji: '💸', label: 'Money', color: '#E59A00' },
-  Temper: { emoji: '🌋', label: 'Temper', color: colors.coral },
-  Quirks: { emoji: '🌀', label: 'Quirks', color: '#FF4E88' },
+  Habits: { emoji: '🔁', label: 'Habits', color: colors.primary },
+  Baggage: { emoji: '🧳', label: 'Baggage', color: colors.deep },
+  Hygiene: { emoji: '🧼', label: 'Hygiene', color: '#0E9C8A' },
+  Money: { emoji: '💸', label: 'Money', color: '#2F8F4E' },
+  Temper: { emoji: '🌋', label: 'Temper', color: '#5E8C1F' },
+  Quirks: { emoji: '🌀', label: 'Quirks', color: '#178A9E' },
   Dealbreaker: { emoji: '🚩', label: 'Dealbreaker', color: '#E2364A' },
   Other: { emoji: '✨', label: 'Other', color: colors.muted },
 };
+
+/** Backgrounds for avatars without a photo: shades of the logo green. */
+export const avatarColors = ['#0B8566', '#0D5B63', '#149E7C', '#2F8F4E', '#0E9C8A', '#1B6E55'] as const;
 
 /** Adds alpha to a #RRGGBB color, e.g. tint('#FF0000', 0.1). */
 export function tint(hex: string, alpha: number) {

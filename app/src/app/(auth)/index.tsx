@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
@@ -75,7 +76,7 @@ export default function Welcome() {
         keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <View style={styles.logo}>
-            <Text style={{ fontSize: 44 }}>🤷</Text>
+            <Image source={require('@/assets/images/splash-icon.png')} style={{ width: 54, height: 54 }} contentFit="contain" accessibilityLabel="Ick logo" />
           </View>
           <Text style={styles.brand}>Ick</Text>
           <Text style={styles.tagline}>What can you handle?</Text>

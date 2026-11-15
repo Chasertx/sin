@@ -87,6 +87,7 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<LoginThrottle>();
+builder.Services.AddSingleton<LocationBypass>();
 var auth = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
@@ -196,6 +197,9 @@ using (var scope = app.Services.CreateScope())
     {
         db.Database.EnsureCreated();
     }
+    // No migrations here: bring an existing database up to the current model by adding new columns.
+    foreach (var column in SchemaUpgrade.AddMissingColumns(db))
+        app.Logger.LogInformation("Database upgraded: added column {Column}", column);
     if (config.GetValue<bool>("Demo:SeedUsers")) SeedData.Seed(db);
 }
 

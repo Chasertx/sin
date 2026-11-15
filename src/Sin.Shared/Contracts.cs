@@ -20,6 +20,8 @@ public record FlawDto(Guid Id, FlawCategory Category, string Text);
 public record CreateFlawRequest(FlawCategory Category, string Text);
 
 /// <summary>A profile as seen by anyone: nothing but the bad news.</summary>
+/// <param name="Ethnicity">Only ever filled in on your own profile; other people's is never sent.</param>
+/// <param name="DistanceMiles">How far this person is from you, in whole miles. Null on your own profile.</param>
 public record ProfileDto(
     Guid Id,
     string DisplayName,
@@ -28,14 +30,32 @@ public record ProfileDto(
     InterestedIn InterestedIn,
     string? Headline,
     string? PhotoUrl,
-    List<FlawDto> Flaws);
+    List<FlawDto> Flaws,
+    int? HeightInches = null,
+    Ethnicity? Ethnicity = null,
+    int? DistanceMiles = null);
 
 public record UpdateProfileRequest(
     string DisplayName,
     int Age,
     Gender Gender,
     InterestedIn InterestedIn,
-    string? Headline);
+    string? Headline,
+    int? HeightInches = null,
+    Ethnicity? Ethnicity = null);
+
+// ---- Who you want to see ----
+/// <summary>Discover filters. A null bound means "no limit"; an empty ethnicity list means everyone.</summary>
+public record PreferencesDto(
+    int MinAge = Limits.MinAge,
+    int? MaxAge = null,
+    int? MaxDistanceMiles = null,
+    int? MinHeightInches = null,
+    int? MaxHeightInches = null,
+    List<Ethnicity>? Ethnicities = null);
+
+/// <param name="CountryCode">Two-letter country the phone resolved the coordinates to, when it could.</param>
+public record LocationRequest(double Latitude, double Longitude, string? CountryCode = null);
 
 // ---- Swiping ----
 /// <param name="CanLiveWithIt">true = swipe right ("I can live with that"), false = "Dealbreaker".</param>
@@ -56,7 +76,16 @@ public record MessageDto(long Id, Guid SenderId, string Text, DateTime SentAt);
 
 public record SendMessageRequest(string Text);
 
-public record ErrorResponse(string Error);
+/// <param name="Code">Set when the app needs to react to the error, not just show it. See <see cref="ErrorCodes"/>.</param>
+public record ErrorResponse(string Error, string? Code = null);
+
+public static class ErrorCodes
+{
+    /// <summary>We don't know where this person is yet, so they can't browse or swipe.</summary>
+    public const string LocationRequired = "location_required";
+    /// <summary>The location they shared is outside the United States.</summary>
+    public const string OutsideUs = "outside_us";
+}
 
 // ---- Safety ----
 public record ReportRequest(ReportReason Reason, string? Details);
@@ -75,4 +104,10 @@ public static class Limits
     public const int HeadlineMaxLength = 140;
     public const int MessageMaxLength = 1000;
     public const int ReportDetailsMaxLength = 1000;
+    public const int MinAge = 18;
+    public const int MaxAge = 120;
+    /// <summary>4'0" to 8'0".</summary>
+    public const int MinHeightInches = 48;
+    public const int MaxHeightInches = 96;
+    public const int MaxDistanceMiles = 5000;
 }

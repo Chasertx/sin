@@ -4,7 +4,7 @@ import { createRef } from 'react';
 
 import type { Profile } from '@/lib/types';
 
-import { PeekCard, SwipeCard, type SwipeCardHandle } from '../SwipeCard';
+import { PeekCard, SwipeCard, cardDetails, type SwipeCardHandle } from '../SwipeCard';
 
 const profile = (overrides: Partial<Profile> = {}): Profile => ({
   id: 'p1',
@@ -80,4 +80,25 @@ it('PeekCard renders the next profile without gestures', async () => {
   await render(<PeekCard profile={profile({ displayName: 'Next' })} />);
   expect(screen.getByText('Next')).toBeTruthy();
   expect(screen.queryByText('TOO\nMUCH')).toBeNull();
+});
+
+describe('distance and height', () => {
+  it('shows how far away someone is and their height', async () => {
+    await render(<SwipeCard profile={profile({ distanceMiles: 12, heightInches: 67 })} onSwiped={jest.fn()} />);
+    expect(screen.getByText(`12 miles away · 5'7"`)).toBeTruthy();
+  });
+
+  it.each([
+    [{ distanceMiles: 1 }, 'Nearby'],
+    [{ distanceMiles: 340, heightInches: null }, '340 miles away'],
+    [{ heightInches: 74 }, `6'2"`],
+  ])('copes with only one of them: %p', (extra, text) => {
+    expect(cardDetails(profile(extra))).toBe(text);
+  });
+
+  it('leaves the line out when there is nothing to say', async () => {
+    await render(<SwipeCard profile={profile()} onSwiped={jest.fn()} />);
+    expect(cardDetails(profile())).toBe('');
+    expect(screen.queryByText(/miles away|Nearby/)).toBeNull();
+  });
 });

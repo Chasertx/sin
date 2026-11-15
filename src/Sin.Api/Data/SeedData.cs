@@ -5,13 +5,33 @@ namespace Sin.Api.Data;
 /// <summary>Demo users so the feed isn't empty on first run. Password for all: password123</summary>
 public static class SeedData
 {
+    /// <summary>Where each demo person lives (spread across the US), plus the optional profile details.</summary>
+    private static readonly Dictionary<string, (double Lat, double Lng, int Height, Ethnicity? Ethnicity)> Details = new()
+    {
+        ["Dana"] = (40.71, -74.01, 65, Ethnicity.White),             // New York
+        ["Marcus"] = (41.88, -87.63, 72, Ethnicity.Black),           // Chicago
+        ["Priya"] = (30.27, -97.74, 63, Ethnicity.SouthAsian),       // Austin
+        ["Leo"] = (34.05, -118.24, 70, Ethnicity.HispanicLatino),    // Los Angeles
+        ["Sam"] = (47.61, -122.33, 67, null),                        // Seattle
+        ["Jess"] = (39.74, -104.99, 66, Ethnicity.Asian),            // Denver
+        ["Tom"] = (25.76, -80.19, 71, Ethnicity.White),              // Miami
+        ["Alex"] = (33.75, -84.39, 64, Ethnicity.Multiracial),       // Atlanta
+    };
+
     public static void Seed(SinDb db)
     {
-        if (db.Users.Any(u => u.IsDemo)) return;
+        var existing = db.Users.Where(u => u.IsDemo).ToList();
+        if (existing.Count > 0)
+        {
+            // Demo people created before locations existed would be invisible now: fill them in.
+            foreach (var u in existing.Where(u => !u.HasLocation)) Describe(u);
+            db.SaveChanges();
+            return;
+        }
 
         var hash = BCrypt.Net.BCrypt.HashPassword("password123");
 
-        User Make(string name, int age, Gender g, InterestedIn i, string headline, params (FlawCategory c, string t)[] flaws) => new()
+        User Make(string name, int age, Gender g, InterestedIn i, string headline, params (FlawCategory c, string t)[] flaws) => Describe(new()
         {
             Email = $"{name.ToLowerInvariant()}@demo.sin",
             PasswordHash = hash,
@@ -22,7 +42,7 @@ public static class SeedData
             Headline = headline,
             IsDemo = true,
             Flaws = flaws.Select(f => new Flaw { Category = f.c, Text = f.t }).ToList()
-        };
+        });
 
         db.Users.AddRange(
             Make("Dana", 29, Gender.Woman, InterestedIn.Everyone, "I will read your texts out loud to my group chat.",
@@ -57,5 +77,14 @@ public static class SeedData
                 (FlawCategory.Baggage, "I have a whole binder about why my last relationship ended."))
         );
         db.SaveChanges();
+    }
+
+    private static User Describe(User u)
+    {
+        if (!Details.TryGetValue(u.DisplayName, out var d)) return u;
+        (u.Latitude, u.Longitude, u.LocatedAt) = (d.Lat, d.Lng, DateTime.UtcNow);
+        u.HeightInches ??= d.Height;
+        u.Ethnicity ??= d.Ethnicity;
+        return u;
     }
 }

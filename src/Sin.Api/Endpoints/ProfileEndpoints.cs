@@ -36,6 +36,8 @@ public static class ProfileEndpoints
             if (filter.Check(r.DisplayName) is { } badName) return Error(badName);
             if (filter.Check(headline) is { } badHeadline) return Error(badHeadline);
             if (NegativityGuard.Check(headline) is { } brag) return Error(brag);
+            if (r.HeightInches is < Limits.MinHeightInches or > Limits.MaxHeightInches) return Error("That height doesn't look right.");
+            if (r.Ethnicity is { } ethnicity && !Enum.IsDefined(ethnicity)) return Error("Pick one of the listed options.");
 
             // Only ask the AI screen about words that actually changed.
             var displayName = r.DisplayName.Trim();
@@ -51,8 +53,73 @@ public static class ProfileEndpoints
             user.Gender = r.Gender;
             user.InterestedIn = r.InterestedIn;
             user.Headline = headline;
+            user.HeightInches = r.HeightInches;
+            user.Ethnicity = r.Ethnicity;
             await db.SaveChangesAsync();
             return Results.Ok(user.ToDto(req));
+        });
+
+        // Where you are. Ick is US-only, so this is also what lets you into Discover.
+        g.MapPut("/location", async (LocationRequest r, ClaimsPrincipal me, SinDb db, LocationBypass bypass) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == me.UserId());
+            if (user is null) return Results.NotFound();
+
+            if (UsGeo.IsInUs(r.Latitude, r.Longitude, r.CountryCode))
+            {
+                (user.Latitude, user.Longitude) = UsGeo.Coarsen(r.Latitude, r.Longitude);
+                user.LocatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+                return Results.NoContent();
+            }
+
+            if (bypass.Covers(user))
+            {
+                bypass.Place(user);
+                await db.SaveChangesAsync();
+                return Results.NoContent();
+            }
+
+            // Outside the US: forget the old location too, so they drop out of everyone's Discover.
+            user.Latitude = user.Longitude = null;
+            user.LocatedAt = null;
+            await db.SaveChangesAsync();
+            return Error("Ick is only available in the United States right now.", StatusCodes.Status403Forbidden, ErrorCodes.OutsideUs);
+        });
+
+        // Discover filters: who you want to see.
+        g.MapGet("/preferences", async (ClaimsPrincipal me, SinDb db) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == me.UserId());
+            return user is null ? Results.NotFound() : Results.Ok(user.ToPreferences());
+        });
+
+        g.MapPut("/preferences", async (PreferencesDto r, ClaimsPrincipal me, SinDb db) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == me.UserId());
+            if (user is null) return Results.NotFound();
+
+            if (r.MinAge is < Limits.MinAge or > Limits.MaxAge) return Error($"Ages start at {Limits.MinAge}.");
+            if (r.MaxAge is { } maxAge && (maxAge < r.MinAge || maxAge > Limits.MaxAge)) return Error("The oldest age can't be below the youngest.");
+            if (r.MaxDistanceMiles is < 1 or > Limits.MaxDistanceMiles) return Error("Pick a distance of at least 1 mile.");
+            if (r.MinHeightInches is < Limits.MinHeightInches or > Limits.MaxHeightInches
+                || r.MaxHeightInches is < Limits.MinHeightInches or > Limits.MaxHeightInches)
+                return Error("That height doesn't look right.");
+            if (r.MinHeightInches > r.MaxHeightInches) return Error("The tallest height can't be below the shortest.");
+            var ethnicities = (r.Ethnicities ?? []).Distinct().ToList();
+            if (ethnicities.Any(e => !Enum.IsDefined(e))) return Error("Pick from the listed options.");
+
+            user.PrefMinAge = r.MinAge == Limits.MinAge ? null : r.MinAge;
+            user.PrefMaxAge = r.MaxAge;
+            user.PrefMaxDistanceMiles = r.MaxDistanceMiles;
+            user.PrefMinHeightInches = r.MinHeightInches;
+            user.PrefMaxHeightInches = r.MaxHeightInches;
+            // Ticking every box is the same as ticking none.
+            user.PrefEthnicities = ethnicities.Count is 0 || ethnicities.Count == Enum.GetValues<Ethnicity>().Length
+                ? null
+                : string.Join(',', ethnicities.Order());
+            await db.SaveChangesAsync();
+            return Results.Ok(user.ToPreferences());
         });
 
         g.MapPost("/photo", async (IFormFile file, ClaimsPrincipal me, SinDb db, HttpRequest req, IPhotoStore photos,

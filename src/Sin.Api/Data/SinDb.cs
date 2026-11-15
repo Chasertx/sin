@@ -40,9 +40,12 @@ public class SinDb(DbContextOptions<SinDb> options) : DbContext(options)
             e.Property(u => u.Headline).HasMaxLength(Limits.HeadlineMaxLength);
             e.Property(u => u.Gender).HasConversion<string>();
             e.Property(u => u.InterestedIn).HasConversion<string>();
+            e.Property(u => u.Ethnicity).HasConversion<string>().HasMaxLength(32);
+            e.Property(u => u.PrefEthnicities).HasMaxLength(256);
             e.HasMany(u => u.Flaws).WithOne().HasForeignKey(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
             e.HasMany(u => u.ExternalLogins).WithOne().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.Ignore(u => u.NeedsOnboarding);
+            e.Ignore(u => u.HasLocation);
         });
 
         b.Entity<ExternalLogin>(e =>
