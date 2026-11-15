@@ -4,7 +4,7 @@ export type SsoOutcome = { kind: 'success'; auth: AuthResponse } | { kind: 'erro
 
 /**
  * Parses the URL the API redirects back to after Google/Apple sign-in:
- *   sin://auth#token=...&userId=...&name=...&onboarding=0|1   or   sin://auth#error=...
+ *   sin://auth#token=...&userId=...&name=...&onboarding=0|1&email=...   or   sin://auth#error=...
  * Hand-rolled because React Native's URLSearchParams support is incomplete.
  */
 export function parseSsoRedirect(url: string): SsoOutcome {
@@ -28,6 +28,7 @@ export function parseSsoRedirect(url: string): SsoOutcome {
       userId: params.userId,
       displayName: params.name ?? '',
       needsOnboarding: params.onboarding === '1',
+      email: params.email || null,
     },
   };
 }

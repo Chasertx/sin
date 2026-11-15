@@ -68,6 +68,25 @@ it('signIn persists the session and carries the onboarding flag', async () => {
   expect(ctx.needsOnboarding).toBe(false);
 });
 
+it('remembers the Google or Apple email for the rest of sign-up, in memory only', async () => {
+  await mount();
+  expect(ctx.email).toBeNull();
+  await act(() => ctx.signIn({ ...auth, needsOnboarding: true, email: 'dana@gmail.com' }));
+  expect(ctx.email).toBe('dana@gmail.com');
+  expect(store.get('gwyg.session')).not.toContain('dana@gmail.com');
+
+  await act(() => ctx.signOut());
+  expect(ctx.email).toBeNull();
+});
+
+it('goes back to sign-up when the server says the profile was never finished', async () => {
+  store.set('gwyg.session', JSON.stringify({ token: 'jwt-abc', userId: 'user-1', displayName: 'Dana' }));
+  await mount();
+  expect(ctx.needsOnboarding).toBe(false); // a restored session can't know yet
+  await act(async () => ctx.requireOnboarding());
+  expect(ctx.needsOnboarding).toBe(true);
+});
+
 it('never stores the onboarding flag or anything beyond what it needs', async () => {
   await mount();
   await act(() => ctx.signIn(auth));

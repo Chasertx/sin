@@ -2,15 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterSheet } from '@/components/FilterSheet';
 import { RangeSlider } from '@/components/RangeSlider';
-import { Button, Card, CategoryTag, ChipGroup, Field, MultiChipGroup, Txt } from '@/components/ui';
+import { Button, Card, ChipGroup, Field, MultiChipGroup, Txt } from '@/components/ui';
 import { api, ApiError, CHILD_SAFETY_URL, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import {
   NO_FILTERS,
@@ -21,9 +20,8 @@ import {
   markFiltersChanged,
 } from '@/lib/filters';
 import { useSession } from '@/lib/session';
-import { categoryMeta, colors, fonts, radius, brand, tint } from '@/lib/theme';
+import { colors, fonts, radius, brand, tint } from '@/lib/theme';
 import {
-  CATEGORIES,
   ETHNICITIES,
   GENDERS,
   INTERESTS,
@@ -32,7 +30,6 @@ import {
   formatHeight,
   genderLabel,
   type Ethnicity,
-  type FlawCategory,
   type Gender,
   type InterestedIn,
   type Preferences,
@@ -46,8 +43,6 @@ export default function MyProblems() {
   const insets = useSafeAreaInsets();
   const { signOut, needsOnboarding, finishOnboarding } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [category, setCategory] = useState<FlawCategory>('Habits');
-  const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   // The basics show as a read-only summary; the pencil opens them for editing.
   const [editing, setEditing] = useState(false);
@@ -94,28 +89,6 @@ export default function MyProblems() {
       setBusy(null);
     }
   };
-
-  const confess = () =>
-    draft.trim() &&
-    run('confess', async () => {
-      const flaw = await api.addFlaw(category, draft.trim());
-      setProfile((p) => (p ? { ...p, flaws: [...p.flaws, flaw] } : p));
-      setDraft('');
-    });
-
-  const remove = (id: string, text: string) =>
-    Alert.alert('Take it back?', text, [
-      { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () =>
-          run('del', async () => {
-            await api.deleteFlaw(id);
-            setProfile((p) => (p ? { ...p, flaws: p.flaws.filter((f) => f.id !== id) } : p));
-          }),
-      },
-    ]);
 
   const save = () =>
     run('save', async () => {
@@ -222,46 +195,28 @@ export default function MyProblems() {
             </View>
           ) : null}
 
-          {/* Composer */}
-          <Card style={{ gap: 14 }}>
-            <Txt variant="heading">Confess something 🙊</Txt>
-            <ChipGroup
-              options={CATEGORIES}
-              value={category}
-              onChange={setCategory}
-              render={(c) => `${categoryMeta[c].emoji} ${categoryMeta[c].label}`}
-              colorFor={(c) => categoryMeta[c].color}
-            />
-            <Field
-              placeholder="e.g. I eat cereal for dinner and I'm not sorry."
-              value={draft}
-              onChangeText={setDraft}
-              multiline
-              maxLength={LIMITS.flawMax}
-            />
-            <Button title="Confess" onPress={confess} loading={busy === 'confess'} disabled={!draft.trim()} />
-            <Txt variant="caption" style={{ textAlign: 'center' }}>
-              No humblebrags. “I'm a perfectionist” gets bounced.
-            </Txt>
-          </Card>
-
-          {/* List */}
-          <Txt variant="label" style={{ marginTop: 8, marginLeft: 4 }}>
-            {flaws.length} of {LIMITS.maxFlaws} confessed
-          </Txt>
-          {flaws.map((f) => (
-            <Animated.View key={f.id} entering={FadeInDown.springify()} exiting={FadeOut} layout={LinearTransition}>
-              <Card style={styles.flaw}>
-                <View style={{ flex: 1, gap: 8 }}>
-                  <CategoryTag category={f.category} />
-                  <Txt>{f.text}</Txt>
-                </View>
-                <Pressable onPress={() => remove(f.id, f.text)} hitSlop={10} style={styles.del} accessibilityRole="button" accessibilityLabel={`Delete confession: ${f.text}`}>
-                  <Ionicons name="close" size={18} color={colors.muted} />
-                </Pressable>
-              </Card>
-            </Animated.View>
-          ))}
+          {/* Confessions live on their own page: this is the way in. */}
+          <Pressable
+            onPress={() => router.push('/confessions')}
+            accessibilityRole="button"
+            accessibilityLabel={`My confessions, ${flaws.length} of ${LIMITS.maxFlaws} confessed`}
+            style={({ pressed }) => pressed && { opacity: 0.85 }}>
+            <Card style={styles.confessions}>
+              <View style={styles.confessionsIcon}>
+                <Text style={{ fontSize: 22 }}>🙊</Text>
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Txt variant="heading">My confessions</Txt>
+                <Txt variant="caption">
+                  {flaws.length} of {LIMITS.maxFlaws} confessed
+                </Txt>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+            </Card>
+          </Pressable>
+          {profile && profile.age >= 18 && flaws.length === 0 ? (
+            <Button title="Add your first confession" onPress={() => router.push('/confessions')} />
+          ) : null}
 
           {/* Basics */}
           <Card style={{ gap: 14, marginTop: 8 }}>
@@ -443,7 +398,7 @@ const styles = StyleSheet.create({
   heroName: { fontFamily: fonts.black, fontSize: 24, color: colors.white, marginTop: 12 },
   content: { padding: 16, gap: 12, marginTop: -8 },
   banner: { gap: 4, borderRadius: radius.lg, padding: 18 },
-  flaw: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 16 },
+  confessions: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 },
+  confessionsIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   link: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  del: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
 });

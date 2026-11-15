@@ -17,9 +17,13 @@ interface SessionContextValue {
   isLoading: boolean;
   /** True right after an SSO sign-up, until the profile is filled in. */
   needsOnboarding: boolean;
+  /** The address a Google/Apple sign-in came from, for showing on the rest of sign-up. Never stored. */
+  email: string | null;
   signIn: (auth: AuthResponse) => Promise<void>;
   signOut: () => Promise<void>;
   finishOnboarding: () => void;
+  /** The server says this account hasn't finished signing up (e.g. after the app was restarted mid-way). */
+  requireOnboarding: () => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -28,6 +32,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     SecureStore.getItemAsync(KEY)
@@ -45,6 +50,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setAuthToken(null);
     setSession(null);
     setNeedsOnboarding(false);
+    setEmail(null);
     await SecureStore.deleteItemAsync(KEY).catch(() => {});
   }, []);
 
@@ -54,6 +60,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const data: SessionData = { token: auth.token, userId: auth.userId, displayName: auth.displayName };
     setAuthToken(data.token);
     setNeedsOnboarding(auth.needsOnboarding);
+    setEmail(auth.email ?? null);
     setSession(data);
     await SecureStore.setItemAsync(KEY, JSON.stringify(data)).catch(() => {});
   }, []);
@@ -63,11 +70,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       session,
       isLoading,
       needsOnboarding,
+      email,
       signIn,
       signOut,
       finishOnboarding: () => setNeedsOnboarding(false),
+      requireOnboarding: () => setNeedsOnboarding(true),
     }),
-    [session, isLoading, needsOnboarding, signIn, signOut],
+    [session, isLoading, needsOnboarding, email, signIn, signOut],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

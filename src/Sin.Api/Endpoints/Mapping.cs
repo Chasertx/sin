@@ -48,6 +48,13 @@ public static class Mapping
     public static IResult Error(string message, int status = StatusCodes.Status400BadRequest, string? code = null) =>
         Results.Json(new ErrorResponse(message, code), statusCode: status);
 
+    /// <summary>
+    /// The answer for someone who signed in with Google or Apple and hasn't finished signing up:
+    /// until they give their age (18 or older) they can't browse or swipe.
+    /// </summary>
+    public static IResult ProfileRequired() =>
+        Error("Finish setting up your profile first.", StatusCodes.Status403Forbidden, ErrorCodes.ProfileRequired);
+
     /// <summary>The answer for someone who hasn't shared a US location yet.</summary>
     public static IResult LocationRequired() =>
         Error("Ick is only available in the United States. Share your location to see who's nearby.",

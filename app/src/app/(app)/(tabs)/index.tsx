@@ -8,6 +8,7 @@ import Animated, { ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterSheet } from '@/components/FilterSheet';
+import { ProfileSheet } from '@/components/ProfileSheet';
 import { SafetySheet } from '@/components/SafetySheet';
 import { PeekCard, SwipeCard, type SwipeCardHandle } from '@/components/SwipeCard';
 import { Avatar, Button, Txt } from '@/components/ui';
@@ -56,8 +57,10 @@ const gates: Record<Gate, { emoji: string; title: string; text: string; action: 
 
 export default function Discover() {
   const insets = useSafeAreaInsets();
-  const { session } = useSession();
+  const { session, requireOnboarding } = useSession();
   const [queue, setQueue] = useState<Profile[]>([]);
+  /** The person whose full profile is open. */
+  const [viewing, setViewing] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [match, setMatch] = useState<{ profile: Profile; matchId: string } | null>(null);
@@ -79,6 +82,8 @@ export default function Discover() {
       setQueue((q) => [...q, ...fresh.filter((p) => !q.some((x) => x.id === p.id))]);
     } catch (e) {
       if (e instanceof ApiError && e.code === 'location_required') setGate(ifLocationNeeded);
+      // Signed in with Google or Apple and never finished signing up: back to that page.
+      else if (e instanceof ApiError && e.code === 'profile_required') requireOnboarding();
       else setError(e instanceof ApiError ? e.message : String(e));
     } finally {
       setLoading(false);
@@ -184,7 +189,7 @@ export default function Discover() {
       <View style={styles.deck}>
         {next ? <PeekCard profile={next} /> : null}
         {top ? (
-          <SwipeCard key={top.id} ref={cardRef} profile={top} onSwiped={onSwiped} />
+          <SwipeCard key={top.id} ref={cardRef} profile={top} onSwiped={onSwiped} onOpen={() => setViewing(top)} />
         ) : loading ? (
           <ActivityIndicator size="large" color={colors.primary} />
         ) : gate ? (
@@ -237,11 +242,33 @@ export default function Discover() {
       {top ? (
         <View style={styles.actions}>
           <ActionButton colors={coralish} icon="close" label="Too much" onPress={() => cardRef.current?.swipe(false)} />
+          <Pressable
+            onPress={() => setViewing(top)}
+            style={({ pressed }) => [styles.profileBtn, { transform: [{ scale: pressed ? 0.9 : 1 }] }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${top.displayName}'s full profile`}>
+            <Ionicons name="person" size={20} color={colors.primary} />
+          </Pressable>
           <ActionButton colors={minty} icon="heart" label="I can handle that" big onPress={() => cardRef.current?.swipe(true)} />
         </View>
       ) : null}
 
       <FilterSheet visible={filtering} current={filters} onClose={() => setFiltering(false)} onApply={applyFilters} applyLabel="Show people" />
+
+      <ProfileSheet
+        profile={viewing}
+        onClose={() => setViewing(null)}
+        onDecide={(canHandleIt) => {
+          setViewing(null);
+          cardRef.current?.swipe(canHandleIt);
+        }}
+        onReport={() => {
+          const person = viewing;
+          setViewing(null);
+          setReporting(person);
+        }}
+      />
 
       <SafetySheet
         visible={!!reporting}
@@ -343,7 +370,8 @@ const styles = StyleSheet.create({
   textLink: { fontFamily: fonts.heavy, fontSize: 15, color: colors.primary, marginTop: 6 },
   deck: { flex: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   empty: { alignItems: 'center', gap: 10, paddingHorizontal: 24 },
-  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 48, paddingBottom: 14 },
+  actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 28, paddingBottom: 14 },
+  profileBtn: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 32, ...shadow },
   actionLabel: { fontFamily: fonts.heavy, fontSize: 13, color: colors.inkSoft },
   matchWrap: { flex: 1, justifyContent: 'center', padding: 28 },
   matchInner: { alignItems: 'center', gap: 14 },

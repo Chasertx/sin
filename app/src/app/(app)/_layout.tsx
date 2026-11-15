@@ -9,6 +9,7 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="chat/[id]" />
+      <Stack.Screen name="confessions" />
     </Stack>
   );
 }

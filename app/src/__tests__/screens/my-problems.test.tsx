@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import { Alert, Linking } from 'react-native';
 
 import MyProblems from '@/app/(app)/(tabs)/me';
@@ -36,7 +37,6 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
   ...overrides,
 });
 
-const composer = () => screen.getByPlaceholderText("e.g. I eat cereal for dinner and I'm not sorry.");
 const fieldAfterLabel = (label: string) => screen.getByLabelText(label);
 
 beforeEach(() => {
@@ -48,63 +48,21 @@ beforeEach(() => {
 it('loads and shows the profile', async () => {
   await render(<MyProblems />);
   expect(await screen.findByText('Dana, 29')).toBeTruthy();
-  expect(screen.getByText('Seven streaming subscriptions.')).toBeTruthy();
   expect(screen.getByText('1 of 12 confessed')).toBeTruthy();
+  // The confessions themselves are on their own page now, not listed here.
+  expect(screen.queryByText('Seven streaming subscriptions.')).toBeNull();
+  expect(screen.queryByText('Confess')).toBeNull();
   // The basics are a read-only summary until the pencil is tapped.
   expect(screen.getByText('I read your texts aloud.')).toBeTruthy();
   expect(screen.getByLabelText('Edit the basics')).toBeTruthy();
   expect(screen.queryByText('Save')).toBeNull();
 });
 
-it('confesses in the chosen category', async () => {
-  mockedApi.addFlaw.mockResolvedValue({ id: 'f2', category: 'Temper', text: 'I rage-quit board games.' });
+it('opens the confessions page from the summary row', async () => {
   await render(<MyProblems />);
   await screen.findByText('Dana, 29');
-
-  await fireEvent.press(screen.getByText('🌋 Temper'));
-  await fireEvent.changeText(composer(), '  I rage-quit board games.  ');
-  await fireEvent.press(screen.getByText('Confess'));
-
-  expect(await screen.findByText('I rage-quit board games.')).toBeTruthy();
-  expect(mockedApi.addFlaw).toHaveBeenCalledWith('Temper', 'I rage-quit board games.');
-  expect(composer().props.value).toBe('');
-  expect(screen.getByText('2 of 12 confessed')).toBeTruthy();
-});
-
-it('does nothing when the composer is empty', async () => {
-  await render(<MyProblems />);
-  await screen.findByText('Dana, 29');
-  await fireEvent.press(screen.getByText('Confess'));
-  expect(mockedApi.addFlaw).not.toHaveBeenCalled();
-});
-
-it('explains a rejected humblebrag and keeps the draft', async () => {
-  mockedApi.addFlaw.mockRejectedValue(new ApiError('"perfectionist" sounds suspiciously like a compliment.', 400));
-  await render(<MyProblems />);
-  await screen.findByText('Dana, 29');
-  await fireEvent.changeText(composer(), "I'm a perfectionist");
-  await fireEvent.press(screen.getByText('Confess'));
-
-  await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Hmm', expect.stringContaining('compliment')));
-  expect(composer().props.value).toBe("I'm a perfectionist");
-});
-
-it('deletes a confession only after confirming', async () => {
-  mockedApi.deleteFlaw.mockResolvedValue(undefined);
-  await render(<MyProblems />);
-  await screen.findByText('Seven streaming subscriptions.');
-
-  await fireEvent.press(screen.getByLabelText('Delete confession: Seven streaming subscriptions.'));
-  expect(mockedApi.deleteFlaw).not.toHaveBeenCalled();
-
-  const [title, text, buttons] = (Alert.alert as jest.Mock).mock.calls.at(-1)!;
-  expect([title, text]).toEqual(['Take it back?', 'Seven streaming subscriptions.']);
-  await act(async () => {
-    await buttons.find((b: { text: string }) => b.text === 'Delete').onPress();
-  });
-
-  expect(mockedApi.deleteFlaw).toHaveBeenCalledWith('f1');
-  await waitFor(() => expect(screen.queryByText('Seven streaming subscriptions.')).toBeNull());
+  await fireEvent.press(screen.getByLabelText('My confessions, 1 of 12 confessed'));
+  expect(router.push).toHaveBeenCalledWith('/confessions');
 });
 
 it('saves the basics after tapping the pencil, then goes back to the summary', async () => {
@@ -180,6 +138,9 @@ it('warns when you are invisible because you have no confessions', async () => {
   mockedApi.me.mockResolvedValue(profile({ flaws: [] }));
   await render(<MyProblems />);
   expect(await screen.findByText("🙈 You're invisible right now")).toBeTruthy();
+  expect(screen.getByText('0 of 12 confessed')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Add your first confession'));
+  expect(router.push).toHaveBeenCalledWith('/confessions');
 });
 
 it('uploads a picked photo', async () => {

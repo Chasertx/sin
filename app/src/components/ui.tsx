@@ -135,7 +135,8 @@ export function ChipGroup<T extends string>({
   colorFor,
 }: {
   options: readonly T[];
-  value: T;
+  /** Null when nothing has been picked yet. */
+  value: T | null;
   onChange: (v: T) => void;
   label?: string;
   render?: (o: T) => string;

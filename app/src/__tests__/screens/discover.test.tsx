@@ -9,7 +9,7 @@ import { api, ApiError } from '@/lib/api';
 import { NO_FILTERS, markFiltersChanged } from '@/lib/filters';
 import type { Preferences, Profile } from '@/lib/types';
 
-const mockSession = { session: { token: 't', userId: 'me', displayName: 'Dana' } };
+const mockSession = { session: { token: 't', userId: 'me', displayName: 'Dana' }, requireOnboarding: jest.fn() };
 jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
 jest.mock('@/lib/api', () => ({
   ...jest.requireActual('@/lib/api'),
@@ -309,4 +309,79 @@ describe('filters', () => {
     await render(<Discover />);
     expect(await screen.findByText('Leo argues with phone menus')).toBeTruthy();
   });
+});
+
+describe('full profile', () => {
+  /** Five confessions: the card only has room for two. */
+  const jess = (): Profile => ({
+    ...person('a', 'Jess'),
+    distanceMiles: 12,
+    heightInches: 67,
+    flaws: [1, 2, 3, 4, 5].map((n) => ({ id: `a-${n}`, category: 'Quirks' as const, text: `Confession ${n}` })),
+  });
+  const deck = () => mockedApi.feed.mockResolvedValue([jess(), person('b', 'Leo'), person('c', 'Sam'), person('d', 'Tom')]);
+  const onCard = async () => {
+    deck();
+    await render(<Discover />);
+    await screen.findByText('Confession 2');
+    expect(screen.queryByText('Confession 5')).toBeNull(); // not on the card
+  };
+
+  it('tapping the card opens everything about them', async () => {
+    await onCard();
+    await fireEvent(screen.getByTestId('tap-target'), 'gestureTap');
+
+    expect(await screen.findByText('Confession 5')).toBeTruthy();
+    expect(screen.getByText('5 confessions')).toBeTruthy();
+    expect(screen.getAllByText('12 miles away · 5\'7"').length).toBeGreaterThan(0);
+    expect(mockedApi.swipe).not.toHaveBeenCalled(); // looking isn't deciding
+  });
+
+  it('the profile button opens it too, and closing goes back to the same card', async () => {
+    await onCard();
+    await fireEvent.press(screen.getByLabelText("View Jess's full profile"));
+    expect(await screen.findByText('Confession 5')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Close profile'));
+    await waitFor(() => expect(screen.queryByText('Confession 5')).toBeNull());
+    expect(screen.getByText('Confession 2')).toBeTruthy();
+    expect(mockedApi.swipe).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['I can handle that (from profile)', true],
+    ['Too much (from profile)', false],
+  ])('"%s" decides without going back to the card', async (button, canHandleIt) => {
+    await onCard();
+    await fireEvent.press(screen.getByLabelText("View Jess's full profile"));
+    await fireEvent.press(await screen.findByLabelText(button));
+
+    await waitFor(() => expect(mockedApi.swipe).toHaveBeenCalledWith('a', canHandleIt));
+    expect(await screen.findByText('Leo argues with phone menus')).toBeTruthy();
+    expect(screen.queryByText('Confession 5')).toBeNull();
+  });
+
+  it('can report or block from inside the profile', async () => {
+    await onCard();
+    await fireEvent.press(screen.getByLabelText("View Jess's full profile"));
+    await screen.findByText('Confession 5');
+    await fireEvent.press(screen.getAllByLabelText('Report or block Jess').at(-1)!);
+
+    expect(await screen.findByLabelText('Block Jess')).toBeTruthy();
+    expect(screen.queryByText('Confession 5')).toBeNull(); // the profile makes way for the menu
+  });
+
+  it('has no profile button when nobody is on the deck', async () => {
+    mockedApi.feed.mockResolvedValue([]);
+    await render(<Discover />);
+    await screen.findByText("You've seen everyone's problems");
+    expect(screen.queryByLabelText(/full profile/)).toBeNull();
+  });
+});
+
+it('sends an account that never finished signing up back to that page', async () => {
+  mockedApi.feed.mockRejectedValue(new ApiError('Finish setting up your profile first.', 403, 'profile_required'));
+  await render(<Discover />);
+  await waitFor(() => expect(mockSession.requireOnboarding).toHaveBeenCalled());
+  expect(screen.queryByText('Lost the connection')).toBeNull();
 });

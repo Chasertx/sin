@@ -13,7 +13,9 @@ namespace Sin.Api.Endpoints;
 ///   2. We challenge the provider; it redirects back to /signin-{provider}; the handler
 ///      stores the result in a short-lived "External" cookie and returns to step 1's URL.
 ///   3. We find/create the user, issue our own JWT, and redirect to  sin://auth#token=...
-///      which the OS hands back to the app.
+///      which the OS hands back to the app. For a new account the redirect also carries what the
+///      provider told us (first name, verified email), so the app can show the rest of sign-up
+///      already filled in.
 /// </summary>
 public static class SsoEndpoints
 {
@@ -84,7 +86,7 @@ public static class SsoEndpoints
                                ?? "Mystery Sinner";
                     user = new User
                     {
-                        Email = email ?? $"{scheme.Name.ToLowerInvariant()}-{subject}@sso.sin",
+                        Email = email ?? $"{scheme.Name.ToLowerInvariant()}-{subject}{PlaceholderEmailDomain}",
                         DisplayName = name.Length > 50 ? name[..50] : name,
                         Age = 0,
                         Gender = Shared.Gender.NonBinary,
@@ -101,14 +103,28 @@ public static class SsoEndpoints
             if (user.IsBanned)
                 return Results.Redirect($"{callback}#error={Uri.EscapeDataString("This account has been suspended.")}");
 
-            var fragment = string.Join("&",
-                $"token={Uri.EscapeDataString(tokens.Create(user))}",
-                $"userId={user.Id}",
-                $"name={Uri.EscapeDataString(user.DisplayName)}",
-                $"onboarding={(user.NeedsOnboarding ? "1" : "0")}");
-            return Results.Redirect($"{callback}#{fragment}");
+            return Results.Redirect($"{callback}#{SessionFragment(user, tokens.Create(user))}");
         }).ExcludeFromDescription();
     }
+
+    /// <summary>What the app gets back after a successful sign-in, as a URL fragment.</summary>
+    internal static string SessionFragment(User user, string token)
+    {
+        var parts = new List<string>
+        {
+            $"token={Uri.EscapeDataString(token)}",
+            $"userId={user.Id}",
+            $"name={Uri.EscapeDataString(user.DisplayName)}",
+            $"onboarding={(user.NeedsOnboarding ? "1" : "0")}",
+        };
+        // Only a real address, never the stand-in we store when the provider gave no verified email.
+        if (!user.Email.EndsWith(PlaceholderEmailDomain, StringComparison.OrdinalIgnoreCase))
+            parts.Add($"email={Uri.EscapeDataString(user.Email)}");
+        return string.Join("&", parts);
+    }
+
+    /// <summary>Accounts whose provider gave no verified email are stored under a made-up address here.</summary>
+    internal const string PlaceholderEmailDomain = "@sso.sin";
 
     /// <summary>
     /// Apple only issues verified emails. Google says so explicitly in its "email_verified" claim

@@ -95,11 +95,11 @@ describe('Welcome / login', () => {
     };
 
     it('opens a private browser session and signs in from the redirect', async () => {
-      openAuth.mockResolvedValue({ type: 'success', url: 'exp://127.0.0.1:8081/--/auth#token=abc&userId=u9&name=Chase&onboarding=1' });
+      openAuth.mockResolvedValue({ type: 'success', url: 'exp://127.0.0.1:8081/--/auth#token=abc&userId=u9&name=Chase&onboarding=1&email=chase%40gmail.com' });
       await press('Google');
 
       await waitFor(() =>
-        expect(mockSession.signIn).toHaveBeenCalledWith({ token: 'abc', userId: 'u9', displayName: 'Chase', needsOnboarding: true }),
+        expect(mockSession.signIn).toHaveBeenCalledWith({ token: 'abc', userId: 'u9', displayName: 'Chase', needsOnboarding: true, email: 'chase@gmail.com' }),
       );
       expect(openAuth).toHaveBeenCalledWith(
         'https://api.test/api/auth/sso/Google?returnUrl=exp%3A%2F%2F127.0.0.1%3A8081%2F--%2Fauth',

@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useImperativeHandle, type Ref } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
+import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -28,10 +28,13 @@ const MAX_FLAWS_SHOWN = 2;
 export function SwipeCard({
   profile,
   onSwiped,
+  onOpen,
   ref,
 }: {
   profile: Profile;
   onSwiped: (canHandleIt: boolean) => void;
+  /** Tapping the card (rather than dragging it) asks to see the whole profile. */
+  onOpen?: () => void;
   ref?: Ref<SwipeCardHandle>;
 }) {
   const { width } = useWindowDimensions();
@@ -74,6 +77,17 @@ export function SwipeCard({
     },
   });
 
+  const open = () => onOpen?.();
+  const tap = useTapGesture({
+    maxDistance: 12,
+    onActivate: () => {
+      'worklet';
+      scheduleOnRN(open);
+    },
+  });
+  // Whichever recognises the touch first wins: a drag swipes, a tap opens the profile.
+  const gesture = useCompetingGestures(pan, tap);
+
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: tx.value },
@@ -93,7 +107,7 @@ export function SwipeCard({
   const extra = profile.flaws.length - MAX_FLAWS_SHOWN;
 
   return (
-    <GestureDetector gesture={pan}>
+    <GestureDetector gesture={gesture}>
       <Animated.View style={[styles.card, shadow, cardStyle]}>
         <CardBody profile={profile} extra={extra} />
 
@@ -192,8 +206,9 @@ const styles = StyleSheet.create({
   },
   peek: { transform: [{ scale: 0.94 }, { translateY: 18 }], opacity: 0.7 },
   photo: { height: '46%', justifyContent: 'flex-end' },
-  noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingBottom: 40 },
-  noPhotoInitial: { fontFamily: fonts.black, fontSize: 84, color: tint(colors.white, 0.9) },
+  // Sits in the top of the photo area, clear of the name and distance lines at the bottom.
+  noPhoto: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingBottom: 104 },
+  noPhotoInitial: { fontFamily: fonts.black, fontSize: 72, lineHeight: 80, color: tint(colors.white, 0.9) },
   noPhotoCaption: { fontFamily: fonts.bold, fontSize: 13, color: tint(colors.white, 0.9) },
   photoShade: { ...StyleSheet.absoluteFill, top: '45%' },
   nameBlock: { padding: 20, gap: 2 },

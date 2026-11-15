@@ -102,6 +102,8 @@ public static class ErrorCodes
     public const string LocationRequired = "location_required";
     /// <summary>The location they shared is outside the United States.</summary>
     public const string OutsideUs = "outside_us";
+    /// <summary>Signed in with Google or Apple but hasn't given their age and preferences yet.</summary>
+    public const string ProfileRequired = "profile_required";
 }
 
 // ---- Safety ----

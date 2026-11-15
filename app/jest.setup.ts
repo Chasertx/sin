@@ -1,11 +1,16 @@
 /* Shared test setup: swaps native modules for in-memory fakes so screens render under Jest. */
-// Gestures: render children as-is; the pan hook returns an inert gesture.
+// Gestures: render children as-is; the pan hook returns an inert gesture. Tests can't touch the
+// screen for real, so a tap gesture's handler is exposed as a "gestureTap" event on a wrapper view.
 jest.mock('react-native-gesture-handler', () => {
   const RN = require('react-native');
+  const React = require('react');
   return {
     GestureHandlerRootView: RN.View,
-    GestureDetector: ({ children }: { children: unknown }) => children,
+    GestureDetector: ({ gesture, children }: { gesture?: { onTap?: () => void }; children: unknown }) =>
+      gesture?.onTap ? React.createElement(RN.View, { testID: 'tap-target', onGestureTap: gesture.onTap, style: { flex: 1 } }, children) : children,
     usePanGesture: () => ({}),
+    useTapGesture: (config: { onActivate?: () => void }) => ({ onTap: config.onActivate }),
+    useCompetingGestures: (...gestures: object[]) => Object.assign({}, ...gestures),
   };
 });
 

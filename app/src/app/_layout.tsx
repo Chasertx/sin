@@ -29,7 +29,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session, isLoading } = useSession();
+  const { session, isLoading, needsOnboarding } = useSession();
   // Has this phone confirmed its owner is 18 or older? Null while that's being read.
   const [age, setAge] = useState<AgeGateStatus | null>(null);
 
@@ -51,8 +51,12 @@ function RootNavigator() {
     <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-        <Stack.Protected guard={!!session}>
+        <Stack.Protected guard={!!session && !needsOnboarding}>
           <Stack.Screen name="(app)" />
+        </Stack.Protected>
+        {/* Signed in with Google or Apple, but the rest of sign-up isn't done yet. */}
+        <Stack.Protected guard={!!session && needsOnboarding}>
+          <Stack.Screen name="onboarding" />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
           <Stack.Screen name="(auth)" />

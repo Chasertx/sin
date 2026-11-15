@@ -87,6 +87,8 @@ export interface AuthResponse {
   userId: string;
   displayName: string;
   needsOnboarding: boolean;
+  /** Only after signing in with Google or Apple: the address that account uses. */
+  email?: string | null;
 }
 
 export interface Flaw {

@@ -4,8 +4,13 @@ describe('parseSsoRedirect', () => {
   it('reads a successful sign-in', () => {
     expect(parseSsoRedirect('sin://auth#token=abc.def.ghi&userId=u-1&name=Chase%20A&onboarding=0')).toEqual({
       kind: 'success',
-      auth: { token: 'abc.def.ghi', userId: 'u-1', displayName: 'Chase A', needsOnboarding: false },
+      auth: { token: 'abc.def.ghi', userId: 'u-1', displayName: 'Chase A', needsOnboarding: false, email: null },
     });
+  });
+
+  it('carries the email a new Google or Apple account came with, for filling in sign-up', () => {
+    const r = parseSsoRedirect('sin://auth#token=t&userId=u&name=Jess&onboarding=1&email=jess.o%27neil%2Bick%40gmail.com');
+    expect(r.kind === 'success' && r.auth).toMatchObject({ displayName: 'Jess', needsOnboarding: true, email: "jess.o'neil+ick@gmail.com" });
   });
 
   it('flags new accounts that need onboarding', () => {
