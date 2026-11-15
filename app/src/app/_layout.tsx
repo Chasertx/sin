@@ -8,9 +8,11 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AgeGate } from '@/components/AgeGate';
+import { loadAgeGate, type AgeGateStatus } from '@/lib/ageGate';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/lib/theme';
 
@@ -28,12 +30,22 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { session, isLoading } = useSession();
+  // Has this phone confirmed its owner is 18 or older? Null while that's being read.
+  const [age, setAge] = useState<AgeGateStatus | null>(null);
 
   useEffect(() => {
-    if (!isLoading) SplashScreen.hideAsync().catch(() => {});
-  }, [isLoading]);
+    void loadAgeGate().then(setAge);
+  }, []);
 
-  if (isLoading) return null;
+  const ready = !isLoading && age !== null;
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+
+  if (!ready) return null;
+
+  // Adults only: until the age check is passed nothing else exists, signed in or not.
+  if (age !== 'passed') return <AgeGate blocked={age === 'blocked'} onPassed={() => setAge('passed')} />;
 
   return (
     <>
