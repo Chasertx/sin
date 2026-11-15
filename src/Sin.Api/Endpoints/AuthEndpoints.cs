@@ -110,6 +110,40 @@ public static class AuthEndpoints
 
             return Results.Ok(new { message = "Email verified successfully. You can now sign in." });
         });
+
+        g.MapPost("/resend-verification-email", async (ResendVerificationRequest r, SinDb db, ResendEmailService email, HttpContext http) =>
+        {
+            var user = await db.Users.FindAsync(r.UserId);
+            if (user is null) return Error("User not found.");
+            if (user.EmailVerified) return Error("This account is already verified.");
+
+            // Rate limit: only allow resend once per minute per user
+            var recentToken = await db.EmailVerificationTokens
+                .Where(t => t.UserId == r.UserId && t.CreatedAt > DateTime.UtcNow.AddMinutes(-1))
+                .FirstOrDefaultAsync();
+            if (recentToken is not null) return Error("Please wait 1 minute before requesting another email.", 429);
+
+            // Delete old tokens and create a new one
+            var oldTokens = await db.EmailVerificationTokens.Where(t => t.UserId == r.UserId).ToListAsync();
+            db.EmailVerificationTokens.RemoveRange(oldTokens);
+
+            var token = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+            var verificationToken = new EmailVerificationToken
+            {
+                UserId = user.Id,
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(24),
+            };
+            db.EmailVerificationTokens.Add(verificationToken);
+            await db.SaveChangesAsync();
+
+            var scheme = http.Request.Scheme;
+            var host = http.Request.Host.Host;
+            var verificationUrl = $"{scheme}://{host}/verify-email?token={token}&userId={user.Id}";
+            await email.SendVerificationEmailAsync(user.Email, user.DisplayName, verificationUrl);
+
+            return Results.Ok(new { message = "Verification email sent. Check your inbox." });
+        });
     }
 }
 

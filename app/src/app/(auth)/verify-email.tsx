@@ -18,6 +18,8 @@ export default function VerifyEmail() {
   const [token, setToken] = useState(params.token ?? '');
   const [busy, setBusy] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   async function verify() {
     if (!token.trim()) return Alert.alert('Token', 'Paste the code from your email.');
@@ -38,6 +40,31 @@ export default function VerifyEmail() {
       Alert.alert('Hmm', e instanceof ApiError ? e.message : String(e));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resendEmail() {
+    if (!params.userId) return Alert.alert('Error', 'User ID is missing.');
+
+    setResendBusy(true);
+    try {
+      await api.resendVerificationEmail(params.userId);
+      Alert.alert('Sent!', 'Check your inbox for the verification email.');
+      // Start 60 second cooldown
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (e) {
+      Alert.alert('Hmm', e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setResendBusy(false);
     }
   }
 
@@ -67,12 +94,20 @@ export default function VerifyEmail() {
             />
             <Button title="Verify email" onPress={verify} loading={busy} />
 
+            <Button
+              title={resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend email'}
+              onPress={resendEmail}
+              loading={resendBusy}
+              disabled={resendCooldown > 0 || resendBusy}
+              variant="ghost"
+            />
+
             <View style={{ gap: 8, paddingVertical: 8 }}>
               <Txt variant="caption" style={{ color: colors.muted }}>
                 The link in your email works too — just click it to verify automatically.
               </Txt>
               <Txt variant="caption" style={{ color: colors.muted }}>
-                Code expires in 24 hours. Didn't get the email? Check spam or sign up again.
+                Code expires in 24 hours. Didn't get the email? Check spam or resend it above.
               </Txt>
             </View>
           </>

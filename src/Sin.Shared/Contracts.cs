@@ -13,6 +13,8 @@ public record LoginRequest(string Email, string Password);
 
 public record VerifyEmailRequest(Guid UserId, string Token);
 
+public record ResendVerificationRequest(Guid UserId);
+
 /// <param name="NeedsOnboarding">True for brand-new SSO accounts that still need age/gender/preferences.</param>
 /// <param name="EmailVerificationRequired">True if the user must verify their email before they can swipe.</param>
 public record AuthResponse(string Token, Guid UserId, string DisplayName, bool NeedsOnboarding = false, bool EmailVerificationRequired = false);
