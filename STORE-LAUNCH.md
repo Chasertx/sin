@@ -12,6 +12,7 @@ Everything in the code that the stores require is done. What's left needs your a
 | Report a user, block a user | Flag button on Discover; "..." menu in chat |
 | Delete account inside the app | Possibly Icks → Account → Delete account |
 | Public privacy policy and terms | `/privacy.html` and `/terms.html` on the API |
+| Child safety standards page (Google Play asks dating apps for one) | `/child-safety.html` on the API |
 | Photos don't leak location | Every upload is re-encoded with hidden data removed |
 | United States only | The app asks for location; the API only accepts a position inside the US. Without one you can't browse, be shown to anyone, or be swiped on |
 | Filters (age, distance, height, race / ethnicity) | Possibly Icks → Who you want to see. Height and ethnicity on a profile are optional |

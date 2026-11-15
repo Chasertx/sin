@@ -9,6 +9,7 @@ public class LegalPagesTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Theory]
     [InlineData("/privacy.html", "Privacy Policy", "Delete account")]
     [InlineData("/terms.html", "Community Rules", "no tolerance")]
+    [InlineData("/child-safety.html", "Child Safety Standards", "zero tolerance")]
     public async Task Legal_pages_are_public(string path, string title, string mustMention)
     {
         var res = await factory.CreateClient().GetAsync(path);

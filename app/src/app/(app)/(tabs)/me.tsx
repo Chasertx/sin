@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FilterSheet } from '@/components/FilterSheet';
 import { RangeSlider } from '@/components/RangeSlider';
 import { Button, Card, CategoryTag, ChipGroup, Field, MultiChipGroup, Txt } from '@/components/ui';
-import { api, ApiError, PRIVACY_URL, TERMS_URL } from '@/lib/api';
+import { api, ApiError, CHILD_SAFETY_URL, PRIVACY_URL, TERMS_URL } from '@/lib/api';
 import {
   NO_FILTERS,
   describeAge,
@@ -394,6 +394,11 @@ export default function MyProblems() {
             <Pressable onPress={() => Linking.openURL(TERMS_URL)} style={styles.link} accessibilityRole="link">
               <Ionicons name="document-text-outline" size={18} color={colors.inkSoft} />
               <Txt style={{ flex: 1 }}>Terms & community rules</Txt>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+            <Pressable onPress={() => Linking.openURL(CHILD_SAFETY_URL)} style={styles.link} accessibilityRole="link">
+              <Ionicons name="people-outline" size={18} color={colors.inkSoft} />
+              <Txt style={{ flex: 1 }}>Child safety standards</Txt>
               <Ionicons name="chevron-forward" size={16} color={colors.muted} />
             </Pressable>
             <Pressable onPress={deleteAccount} style={styles.link} accessibilityRole="button" accessibilityLabel="Delete account">

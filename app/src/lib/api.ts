@@ -35,6 +35,7 @@ function resolveApiUrl() {
 export const API_URL = resolveApiUrl();
 export const PRIVACY_URL = `${API_URL}/privacy.html`;
 export const TERMS_URL = `${API_URL}/terms.html`;
+export const CHILD_SAFETY_URL = `${API_URL}/child-safety.html`;
 
 export class ApiError extends Error {
   /**

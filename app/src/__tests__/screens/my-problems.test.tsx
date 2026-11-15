@@ -254,14 +254,16 @@ describe('account', () => {
     expect(Alert.alert).toHaveBeenLastCalledWith('Hmm', 'Something went wrong (500).');
   });
 
-  it('links to the privacy policy and terms', async () => {
+  it('links to the privacy policy, terms and child safety standards', async () => {
     const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
     await render(<MyProblems />);
     await screen.findByText('Dana, 29');
     await fireEvent.press(screen.getByText('Privacy policy'));
     await fireEvent.press(screen.getByText('Terms & community rules'));
+    await fireEvent.press(screen.getByText('Child safety standards'));
     expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/privacy\.html$/));
     expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/terms\.html$/));
+    expect(open).toHaveBeenCalledWith(expect.stringMatching(/\/child-safety\.html$/));
   });
 });
 
