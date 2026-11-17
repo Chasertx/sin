@@ -69,7 +69,6 @@
     ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
-      "!src/lib/supabase.ts",
       "!**/__tests__/**"
     ],
     "coverageReporters": [

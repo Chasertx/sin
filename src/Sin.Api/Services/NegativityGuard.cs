@@ -2,7 +2,6 @@ namespace Sin.Api.Services;
 
 /// <summary>
 /// The core rule of the app: no bragging. Rejects text that smells like a normal dating profile.
-/// Deliberately simple; swap for an AI moderation call later if you want it smarter.
 /// </summary>
 public static class NegativityGuard
 {

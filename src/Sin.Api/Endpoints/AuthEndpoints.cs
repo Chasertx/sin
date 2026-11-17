@@ -39,14 +39,13 @@ public static class AuthEndpoints
                 Age = r.Age,
                 Gender = r.Gender,
                 InterestedIn = r.InterestedIn,
-                EmailVerified = isPractice, // Practice accounts skip email verification
+                EmailVerified = isPractice,
             };
             db.Users.Add(user);
             await db.SaveChangesAsync();
             // A practice account arrives with a filled-in profile and a private cast of made-up people.
             if (isPractice) await practice.PopulateAsync(db, user, photos);
 
-            // For real accounts, create a verification token and send email
             if (!isPractice)
             {
                 var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
@@ -117,13 +116,11 @@ public static class AuthEndpoints
             if (user is null) return Error("User not found.");
             if (user.EmailVerified) return Error("This account is already verified.");
 
-            // Rate limit: only allow resend once per minute per user
             var recentToken = await db.EmailVerificationTokens
                 .Where(t => t.UserId == r.UserId && t.CreatedAt > DateTime.UtcNow.AddMinutes(-1))
                 .FirstOrDefaultAsync();
             if (recentToken is not null) return Error("Please wait 1 minute before requesting another email.", 429);
 
-            // Delete old tokens and create a new one
             var oldTokens = await db.EmailVerificationTokens.Where(t => t.UserId == r.UserId).ToListAsync();
             db.EmailVerificationTokens.RemoveRange(oldTokens);
 

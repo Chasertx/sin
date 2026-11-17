@@ -1,6 +1,5 @@
 namespace Sin.Shared;
 
-// ---- Auth ----
 public record RegisterRequest(
     string Email,
     string Password,
@@ -22,7 +21,6 @@ public record AuthResponse(string Token, Guid UserId, string DisplayName, bool N
 /// <summary>Response after sign-up: user created but must verify email before they can log in.</summary>
 public record SignUpResponse(Guid UserId, string Email, string DisplayName);
 
-// ---- Profile ----
 public record FlawDto(Guid Id, FlawCategory Category, string Text);
 
 public record CreateFlawRequest(FlawCategory Category, string Text);
@@ -52,7 +50,6 @@ public record UpdateProfileRequest(
     int? HeightInches = null,
     Ethnicity? Ethnicity = null);
 
-// ---- Who you want to see ----
 /// <summary>Discover filters. A null bound means "no limit"; an empty ethnicity list means everyone.</summary>
 public record PreferencesDto(
     int MinAge = Limits.MinAge,
@@ -65,13 +62,11 @@ public record PreferencesDto(
 /// <param name="CountryCode">Two-letter country the phone resolved the coordinates to, when it could.</param>
 public record LocationRequest(double Latitude, double Longitude, string? CountryCode = null);
 
-// ---- Swiping ----
 /// <param name="CanLiveWithIt">true = swipe right ("I can live with that"), false = "Dealbreaker".</param>
 public record SwipeRequest(Guid TargetUserId, bool CanLiveWithIt);
 
 public record SwipeResult(bool IsMatch, Guid? MatchId);
 
-// ---- Matches & chat ----
 public record MatchDto(
     Guid MatchId,
     Guid OtherUserId,
@@ -114,7 +109,6 @@ public static class ErrorCodes
     public const string ProfileRequired = "profile_required";
 }
 
-// ---- Safety ----
 public record ReportRequest(ReportReason Reason, string? Details);
 
 public record ReportDto(long Id, Guid ReporterId, Guid ReportedId, string ReportedName, ReportReason Reason,

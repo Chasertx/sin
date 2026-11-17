@@ -29,7 +29,6 @@ export default function Register() {
     setBusy(true);
     try {
       const signupResult = await api.register({ email: email.trim(), password, displayName: name.trim(), age: ageNum, gender, interestedIn });
-      // New user: must verify email before they can sign in
       router.replace({
         pathname: '/(auth)/verify-email',
         params: { userId: signupResult.userId },

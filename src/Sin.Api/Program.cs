@@ -25,14 +25,14 @@ if (!builder.Environment.IsDevelopment() && (config["Jwt:Key"] ?? "").Contains("
 if (Environment.GetEnvironmentVariable("PORT") is { Length: > 0 } port)
     builder.WebHost.UseUrls($"http://+:{port}");
 
-// ---- Database: SQLite file locally (zero setup); Postgres when hosted (Database:Provider=Postgres). ----
+// Database: SQLite file locally (zero setup); Postgres when hosted (Database:Provider=Postgres).
 var connectionString = config.GetConnectionString("Sin")!;
 if (string.Equals(config["Database:Provider"], "Postgres", StringComparison.OrdinalIgnoreCase))
     builder.Services.AddDbContext<SinDb>(o => o.UseNpgsql(PostgresConnection.Normalize(connectionString)));
 else
     builder.Services.AddDbContext<SinDb>(o => o.UseSqlite(connectionString));
 
-// ---- Photos: Supabase Storage if configured, else local disk ----
+// Photos: Supabase Storage if configured, else local disk
 if (config["Supabase:Url"] is { Length: > 0 } && config["Supabase:ServiceKey"] is { Length: > 0 })
     builder.Services.AddHttpClient<IPhotoStore, SupabasePhotoStore>();
 else
@@ -64,7 +64,7 @@ builder.Services.AddCors(o => o.AddPolicy("dev-web", p => p
     .SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var u) && (u.IsLoopback || u.Host.StartsWith("192.168.") || u.Host.StartsWith("10.")))
     .AllowAnyHeader().AllowAnyMethod()));
 
-// ---- Rate limiting: per signed-in user, or per IP when anonymous ----
+// Rate limiting: per signed-in user, or per IP when anonymous
 var limitsEnabled = config.GetValue("RateLimits:Enabled", true);
 builder.Services.AddRateLimiter(o =>
 {
@@ -83,10 +83,8 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// ---- Email: Resend for transactional email ----
 builder.Services.AddHttpClient<ResendEmailService>();
 
-// ---- Auth: JWT bearer ----
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<LoginThrottle>();
@@ -123,7 +121,7 @@ var auth = builder.Services
         o.ExpireTimeSpan = TimeSpan.FromMinutes(5);
     });
 
-// ---- SSO providers: each one turns on only when its credentials are configured ----
+// SSO providers: each one turns on only when its credentials are configured
 if (config["Sso:Google:ClientId"] is { Length: > 0 } googleId)
 {
     auth.AddGoogle("Google", o =>
@@ -156,7 +154,6 @@ if (config["Sso:Apple:ClientId"] is { Length: > 0 } appleId)
 builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery();
 
-// ---- Swagger with a "Authorize" button ----
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -179,7 +176,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment() && app.Services.GetRequiredService<IContentModerator>() is NoModerator)
     app.Logger.LogWarning("Moderation:ApiKey is not set: photos and profile text are NOT being screened for porn or gore.");
 
-// ---- Create DB + seed demo data on startup ----
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<SinDb>();

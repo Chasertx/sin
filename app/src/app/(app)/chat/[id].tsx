@@ -33,7 +33,6 @@ export default function Chat() {
     setMessages((prev) => [...prev, ...fresh]);
   }, []);
 
-  // Simple polling while the screen is open. Swap for SignalR when you want real-time.
   useFocusEffect(
     useCallback(() => {
       let alive = true;

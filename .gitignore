@@ -500,3 +500,9 @@ demo/
 
 # Local dev database folder (mounted into the API container)
 /data/
+
+# Internal notes
+SECURITY-AUDIT.md
+qr_generator.html
+.claude/
+CLAUDE.md

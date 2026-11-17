@@ -7,8 +7,7 @@ using Sin.Api.Services;
 namespace Sin.Api.Endpoints;
 
 /// <summary>
-/// Single sign-on for the mobile app (Google, Apple), using the server-side flow that
-/// MAUI's WebAuthenticator expects:
+/// Single sign-on for the mobile app (Google, Apple), using a server-side flow:
 ///   1. App opens the system browser at  GET /api/auth/sso/{provider}
 ///   2. We challenge the provider; it redirects back to /signin-{provider}; the handler
 ///      stores the result in a short-lived "External" cookie and returns to step 1's URL.
@@ -65,7 +64,7 @@ public static class SsoEndpoints
             if (user is null)
             {
                 // 2) Same email as an existing account? Only link if the provider vouches the email
-                //    is verified; otherwise anyone could claim someone else's account (audit #3).
+                //    is verified; otherwise anyone could claim someone else's account.
                 var verified = IsEmailVerified(scheme.Name, p);
                 if (email is not null)
                 {

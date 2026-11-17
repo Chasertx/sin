@@ -143,7 +143,6 @@ public class Message
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
 }
 
-/// <summary>One-time token sent via email for verifying the user's email address.</summary>
 public class EmailVerificationToken
 {
     public Guid Id { get; set; } = Guid.NewGuid();

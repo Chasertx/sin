@@ -94,7 +94,6 @@ async function request<T>(method: string, path: string, body?: unknown, isForm =
 }
 
 export const api = {
-  // auth
   register: (r: {
     email: string;
     password: string;
@@ -110,7 +109,6 @@ export const api = {
   ssoStartUrl: (provider: string, returnUrl: string) =>
     `${API_URL}/api/auth/sso/${provider}?returnUrl=${encodeURIComponent(returnUrl)}`,
 
-  // me
   me: () => request<Profile>('GET', '/api/me'),
   updateMe: (p: {
     displayName: string;
@@ -139,12 +137,10 @@ export const api = {
     return request<{ photoUrl: string }>('POST', '/api/me/photo', form, true);
   },
 
-  // feed
   feed: () => request<Profile[]>('GET', '/api/feed'),
   swipe: (targetUserId: string, canLiveWithIt: boolean) =>
     request<SwipeResult>('POST', '/api/swipes', { targetUserId, canLiveWithIt }),
 
-  // matches & chat
   matches: () => request<Match[]>('GET', '/api/matches'),
   history: () => request<MatchHistoryEntry[]>('GET', '/api/matches/history'),
   messages: (matchId: string, after: number) =>
@@ -152,7 +148,6 @@ export const api = {
   send: (matchId: string, text: string) => request<Message>('POST', `/api/matches/${matchId}/messages`, { text }),
   unmatch: (matchId: string) => request<void>('DELETE', `/api/matches/${matchId}`),
 
-  // safety
   block: (userId: string) => request<void>('POST', `/api/users/${userId}/block`),
   report: (userId: string, reason: ReportReason, details: string | null) =>
     request<void>('POST', `/api/users/${userId}/report`, { reason, details }),

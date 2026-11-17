@@ -29,7 +29,6 @@ export default function VerifyEmail() {
     try {
       await api.verifyEmail(params.userId, token.trim());
       setVerified(true);
-      // Now sign in with their email and password (they must log in normally)
       Alert.alert('Success!', 'Your email is verified. Now sign in with your email and password.', [
         {
           text: 'Go to sign in',
@@ -50,7 +49,6 @@ export default function VerifyEmail() {
     try {
       await api.resendVerificationEmail(params.userId);
       Alert.alert('Sent!', 'Check your inbox for the verification email.');
-      // Start 60 second cooldown
       setResendCooldown(60);
       const interval = setInterval(() => {
         setResendCooldown((prev) => {

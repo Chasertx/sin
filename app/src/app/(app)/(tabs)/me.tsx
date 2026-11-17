@@ -50,16 +50,13 @@ export default function MyProblems() {
   // The basics show as a read-only summary; the pencil opens them for editing.
   const [editing, setEditing] = useState(false);
 
-  // editable basics
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [headline, setHeadline] = useState('');
   const [gender, setGender] = useState<Gender>('Woman');
   const [interestedIn, setInterestedIn] = useState<InterestedIn>('Everyone');
-  // optional extras: both can be left empty
   const [height, setHeight] = useState<number | null>(null);
   const [ethnicity, setEthnicity] = useState<Ethnicity | null>(null);
-  // who you want to see in Discover
   const [filters, setFilters] = useState<Preferences>(NO_FILTERS);
   const [filtering, setFiltering] = useState(false);
 
@@ -157,7 +154,6 @@ export default function MyProblems() {
         style={{ flex: 1, backgroundColor: colors.bg }}
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         keyboardShouldPersistTaps="handled">
-        {/* Header */}
         <LinearGradient colors={brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 16 }]}>
           <View style={styles.heroTop}>
             <Text style={styles.heroTitle}>Possibly Icks</Text>
@@ -221,7 +217,6 @@ export default function MyProblems() {
             <Button title="Add your first confession" onPress={() => router.push('/confessions')} />
           ) : null}
 
-          {/* Basics */}
           <Card style={{ gap: 14, marginTop: 8 }}>
             <View style={styles.basicsHead}>
               <Txt variant="heading">The basics</Txt>
@@ -322,7 +317,6 @@ export default function MyProblems() {
             ) : null}
           </Card>
 
-          {/* Filters */}
           <Card style={{ gap: 14, marginTop: 8 }}>
             <View style={styles.basicsHead}>
               <View style={{ flex: 1 }}>
@@ -341,7 +335,6 @@ export default function MyProblems() {
             </View>
           </Card>
 
-          {/* Appearance */}
           <Card style={{ gap: 12, marginTop: 8 }}>
             <View>
               <Txt variant="heading">Appearance</Txt>
@@ -352,7 +345,6 @@ export default function MyProblems() {
             <ChipGroup options={APPEARANCES} value={appearance} onChange={setAppearance} render={appearanceLabel} colorFor={() => colors.primary} />
           </Card>
 
-          {/* Account */}
           <Card style={{ gap: 6, marginTop: 8 }}>
             <Txt variant="heading">Account</Txt>
             <Pressable onPress={() => Linking.openURL(PRIVACY_URL)} style={styles.link} accessibilityRole="link">

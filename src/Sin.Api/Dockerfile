@@ -12,7 +12,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app .
 RUN mkdir -p /data /app/wwwroot/uploads && chown -R $APP_UID /data /app/wwwroot/uploads
-# Run as the image's built-in non-root "app" user (audit #8).
+# Run as the image's built-in non-root "app" user.
 USER $APP_UID
 ENV ASPNETCORE_URLS=http://+:5080 \
     ConnectionStrings__Sin="Data Source=/data/sin.db"

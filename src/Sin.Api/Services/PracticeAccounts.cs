@@ -45,7 +45,6 @@ public class PracticeAccounts(IConfiguration config)
     public bool CanSee(User me, User other) =>
         IsTester(me) ? other.PracticeOwnerId == me.Id : other.PracticeOwnerId is null && !IsPracticeEmail(other.Email);
 
-    // ---- The made-up people ----
 
     private enum Role { Discover, LikesYou, Current, Ended }
 

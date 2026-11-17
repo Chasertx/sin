@@ -133,7 +133,6 @@ export function tint(hex: string, alpha: number) {
   return `${hex}${a}`;
 }
 
-// ---------- Appearance: light, dark, or whatever the phone is set to ----------
 
 export type Appearance = 'system' | 'light' | 'dark';
 export type Scheme = 'light' | 'dark';

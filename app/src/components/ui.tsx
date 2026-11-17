@@ -19,7 +19,6 @@ import {
 import { avatarColors, brand, fonts, makeStyles, radius, shadow, tint, useCategoryMeta, useColors } from '@/lib/theme';
 import type { FlawCategory } from '@/lib/types';
 
-// ---------- Text ----------
 type Variant = 'display' | 'title' | 'heading' | 'body' | 'caption' | 'label';
 
 const variantStyle: Record<Variant, TextStyle> = {
@@ -38,7 +37,6 @@ export function Txt({ variant = 'body', style, ...rest }: TextProps & { variant?
   return <Text {...rest} style={[{ color }, variantStyle[variant], style]} />;
 }
 
-// ---------- Buttons ----------
 interface ButtonProps {
   title: string;
   onPress?: () => void;
@@ -87,7 +85,6 @@ export function Button({ title, onPress, variant = 'gradient', icon, loading, di
   );
 }
 
-// ---------- Inputs ----------
 export function Field({ label, style, ...rest }: TextInputProps & { label?: string }) {
   const styles = useStyles();
   const colors = useColors();
@@ -104,7 +101,6 @@ export function Field({ label, style, ...rest }: TextInputProps & { label?: stri
   );
 }
 
-// ---------- Chips ----------
 export function Chip({
   label,
   selected,
@@ -217,7 +213,6 @@ export function CategoryTag({ category }: { category: FlawCategory }) {
   );
 }
 
-// ---------- Cards & avatars ----------
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const styles = useStyles();
   return <View style={[styles.card, shadow, style]}>{children}</View>;

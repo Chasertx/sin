@@ -4,7 +4,6 @@ namespace Sin.Api.Services;
 
 public class ResendEmailService(HttpClient http, IConfiguration config, ILogger<ResendEmailService> log)
 {
-    /// <summary>Send a verification email with a link to confirm the user's email address.</summary>
     public async Task<bool> SendVerificationEmailAsync(string userEmail, string displayName, string verificationUrl)
     {
         var apiKey = config["Resend:ApiKey"];

@@ -46,7 +46,7 @@ public static class FeedEndpoints
                 .Where(u => u.Flaws.Count >= Limits.MinFlawsToAppearInFeed)
                 .Where(u => !db.Swipes.Any(s => s.SwiperId == me.Id && s.TargetId == u.Id));
 
-            // ---- My filters. A filter on height or ethnicity only shows people who've filled that in. ----
+            // My filters. A filter on height or ethnicity only shows people who've filled that in.
             if (me.PrefMinAge is { } minAge) people = people.Where(u => u.Age >= minAge);
             if (me.PrefMaxAge is { } maxAge) people = people.Where(u => u.Age <= maxAge);
             if (me.PrefMinHeightInches is { } minHeight) people = people.Where(u => u.HeightInches >= minHeight);

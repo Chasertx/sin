@@ -41,3 +41,11 @@ example
 # generated native folders
 /ios
 /android
+
+# test coverage
+coverage/
+
+# local tooling
+.claude/
+AGENTS.md
+CLAUDE.md
