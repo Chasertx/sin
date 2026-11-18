@@ -225,7 +225,7 @@ public class PracticeAccountLimitTests(PracticeAccountLimitTests.OneOnlyFactory 
         await factory.CreateUnlocatedUserAsync("Real");
 
         await first.Client.DeleteAsync("/api/me");
-        await (await factory.CreateClient().PostJsonAsync("/api/auth/register", Request("second@ick.test"))).ReadAsync<AuthResponse>();
+        await (await factory.CreateClient().PostJsonAsync("/api/auth/register", Request("second@ick.test"))).ReadAsync<SignUpResponse>();
     }
 }
 

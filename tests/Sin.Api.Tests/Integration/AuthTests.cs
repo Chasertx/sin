@@ -15,25 +15,87 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         new(email ?? TestHelpers.UniqueEmail(), "password123", "Casey", 27, Gender.Woman, InterestedIn.Everyone);
 
     [Fact]
-    public async Task Register_returns_a_working_token()
+    public async Task Sign_in_is_refused_until_the_email_is_verified()
     {
-        var auth = await (await _anon.PostJsonAsync("/api/auth/register", Valid())).ReadAsync<AuthResponse>();
+        var req = Valid();
+        var signUp = await (await _anon.PostJsonAsync("/api/auth/register", req)).ReadAsync<SignUpResponse>();
+        Assert.Equal("Casey", signUp.DisplayName);
+        Assert.Equal(req.Email, signUp.Email);
 
-        Assert.False(string.IsNullOrWhiteSpace(auth.Token));
-        Assert.Equal("Casey", auth.DisplayName);
+        var error = await (await _anon.PostJsonAsync("/api/auth/login", new LoginRequest(req.Email, req.Password)))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+        Assert.Contains("verify your email", error);
+
+        var auth = await factory.VerifyAndLoginAsync(signUp.UserId, req.Email, req.Password);
         Assert.False(auth.NeedsOnboarding);
 
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
         var me = await (await client.GetAsync("/api/me")).ReadAsync<ProfileDto>();
-        Assert.Equal(auth.UserId, me.Id);
+        Assert.Equal(signUp.UserId, me.Id);
+    }
+
+    [Fact]
+    public async Task A_wrong_verification_token_is_rejected_and_the_right_one_works_once()
+    {
+        var signUp = await (await _anon.PostJsonAsync("/api/auth/register", Valid())).ReadAsync<SignUpResponse>();
+        var token = await factory.VerificationTokenAsync(signUp.UserId);
+
+        await (await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(signUp.UserId, "nope")))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+        await (await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(Guid.NewGuid(), token)))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+
+        Assert.True((await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(signUp.UserId, token))).IsSuccessStatusCode);
+        await (await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(signUp.UserId, token)))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task An_expired_verification_token_is_rejected()
+    {
+        var signUp = await (await _anon.PostJsonAsync("/api/auth/register", Valid())).ReadAsync<SignUpResponse>();
+        var token = await factory.VerificationTokenAsync(signUp.UserId);
+        await factory.WithDbAsync(db => db.EmailVerificationTokens.Where(t => t.UserId == signUp.UserId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.ExpiresAt, DateTime.UtcNow.AddMinutes(-1))));
+
+        var error = await (await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(signUp.UserId, token)))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+        Assert.Contains("expired", error);
+    }
+
+    [Fact]
+    public async Task Resending_waits_a_minute_and_replaces_the_old_token()
+    {
+        var signUp = await (await _anon.PostJsonAsync("/api/auth/register", Valid())).ReadAsync<SignUpResponse>();
+        var first = await factory.VerificationTokenAsync(signUp.UserId);
+
+        await (await _anon.PostJsonAsync("/api/auth/resend-verification-email", new ResendVerificationRequest(signUp.UserId)))
+            .ErrorAsync(HttpStatusCode.TooManyRequests);
+
+        await factory.WithDbAsync(db => db.EmailVerificationTokens.Where(t => t.UserId == signUp.UserId)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.CreatedAt, DateTime.UtcNow.AddMinutes(-2))));
+        Assert.True((await _anon.PostJsonAsync("/api/auth/resend-verification-email", new ResendVerificationRequest(signUp.UserId))).IsSuccessStatusCode);
+
+        var second = await factory.VerificationTokenAsync(signUp.UserId);
+        Assert.NotEqual(first, second);
+        await (await _anon.PostJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(signUp.UserId, first)))
+            .ErrorAsync(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Resending_to_a_verified_account_is_refused()
+    {
+        var u = await factory.CreateUserAsync();
+        var error = await (await _anon.PostJsonAsync("/api/auth/resend-verification-email", new ResendVerificationRequest(u.Id))).ErrorAsync();
+        Assert.Contains("already verified", error);
     }
 
     [Fact]
     public async Task Register_stores_a_hash_not_the_password()
     {
         var req = Valid();
-        await (await _anon.PostJsonAsync("/api/auth/register", req)).ReadAsync<AuthResponse>();
+        await (await _anon.PostJsonAsync("/api/auth/register", req)).ReadAsync<SignUpResponse>();
         var hash = await factory.WithDbAsync(db => db.Users.Where(u => u.Email == req.Email).Select(u => u.PasswordHash).SingleAsync());
         Assert.NotEqual(req.Password, hash);
         Assert.StartsWith("$2", hash); // bcrypt
@@ -64,7 +126,7 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
     public async Task Register_rejects_duplicate_email_case_insensitively()
     {
         var email = TestHelpers.UniqueEmail();
-        await (await _anon.PostJsonAsync("/api/auth/register", Valid(email))).ReadAsync<AuthResponse>();
+        await (await _anon.PostJsonAsync("/api/auth/register", Valid(email))).ReadAsync<SignUpResponse>();
         var error = await (await _anon.PostJsonAsync("/api/auth/register", Valid(email.ToUpperInvariant()))).ErrorAsync(HttpStatusCode.Conflict);
         Assert.Contains("already registered", error);
     }

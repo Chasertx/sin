@@ -46,6 +46,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             ["Admin:ApiKey"] = AdminKey,
             ["Supabase:Url"] = "",
             ["Moderation:ApiKey"] = "",
+            ["Resend:ApiKey"] = "",
             ["Sso:Google:ClientId"] = "",
             ["Sso:Apple:ClientId"] = "",
         };

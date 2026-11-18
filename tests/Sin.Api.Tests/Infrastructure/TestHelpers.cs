@@ -93,7 +93,8 @@ public static class TestHelpers
         var res = await anon.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest(email, password, name, age, gender, interestedIn), Json);
         Assert.True(res.IsSuccessStatusCode, $"register failed: {res.StatusCode} {await res.Content.ReadAsStringAsync()}");
-        var auth = (await res.Content.ReadFromJsonAsync<AuthResponse>(Json))!;
+        var signUp = (await res.Content.ReadFromJsonAsync<SignUpResponse>(Json))!;
+        var auth = await factory.VerifyAndLoginAsync(signUp.UserId, email, password);
 
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
@@ -105,6 +106,25 @@ public static class TestHelpers
         }
 
         return new TestUser(auth.UserId, name, email, password, client);
+    }
+
+    /// <summary>The token that would have been emailed to this user, read from the database.</summary>
+    public static Task<string> VerificationTokenAsync(this ApiFactory factory, Guid userId) =>
+        factory.WithDbAsync(db => db.EmailVerificationTokens.Where(t => t.UserId == userId).Select(t => t.Token).SingleAsync());
+
+    /// <summary>Confirms the email the way the app does, then signs in.</summary>
+    public static async Task<AuthResponse> VerifyAndLoginAsync(this ApiFactory factory, Guid userId, string email, string password)
+    {
+        var anon = factory.CreateClient();
+        var isVerified = await factory.WithDbAsync(db => db.Users.Where(u => u.Id == userId).Select(u => u.EmailVerified).SingleAsync());
+        if (!isVerified)
+        {
+            var token = await factory.VerificationTokenAsync(userId);
+            var verify = await anon.PostAsJsonAsync("/api/auth/verify-email", new VerifyEmailRequest(userId, token), Json);
+            Assert.True(verify.IsSuccessStatusCode, $"verify failed: {verify.StatusCode} {await verify.Content.ReadAsStringAsync()}");
+        }
+        var login = await anon.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password), Json);
+        return await login.ReadAsync<AuthResponse>();
     }
 
     /// <summary>A user who is visible in feeds (has one confession).</summary>
